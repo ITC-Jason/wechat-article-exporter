@@ -42,24 +42,47 @@ export default defineEventHandler(async event => {
   const authKey = getCookieFromResponse('auth-key', response);
   if (!authKey) {
     let responseBody = '';
+    let responseJson: unknown;
     try {
       responseBody = await response.clone().text();
     } catch (error) {
       responseBody = `读取响应体失败: ${error instanceof Error ? error.message : String(error)}`;
     }
+    try {
+      responseJson = JSON.parse(responseBody);
+    } catch {
+      responseJson = undefined;
+    }
 
-    console.error('[bizlogin] auth-key cookie not found:', {
-      status: response.status,
-      statusText: response.statusText,
-      contentType: response.headers.get('content-type'),
-      cookieNames: getCookieNames(response),
-      setCookieCount: response.headers.getSetCookie().length,
-      responseBody,
-    });
+    const proxyDebugger =
+      responseJson && typeof responseJson === 'object' && 'debugger' in responseJson
+        ? (responseJson as { debugger: unknown }).debugger
+        : undefined;
 
     return {
       err: '登录失败，请稍后重试',
+      debugger: proxyDebugger ?? {
+        authKeyMissing: {
+          status: response.status,
+          statusText: response.statusText,
+          contentType: response.headers.get('content-type'),
+          cookieNames: getCookieNames(response),
+          setCookieCount: response.headers.getSetCookie().length,
+          responseBody,
+        },
+      },
     };
+  }
+
+  let loginDebugger: unknown;
+  try {
+    const responseJson: unknown = await response.clone().json();
+    loginDebugger =
+      responseJson && typeof responseJson === 'object' && 'debugger' in responseJson
+        ? (responseJson as { debugger: unknown }).debugger
+        : undefined;
+  } catch {
+    loginDebugger = undefined;
   }
 
   const { nick_name, head_img } = await request(`/api/web/mp/info`, {
@@ -77,6 +100,7 @@ export default defineEventHandler(async event => {
     nickname: nick_name,
     avatar: head_img,
     expires: dayjs().add(4, 'days').toString(),
+    ...(loginDebugger ? { debugger: loginDebugger } : {}),
   });
   const headers = new Headers(response.headers);
   headers.set('Content-Length', new TextEncoder().encode(body).length.toString());

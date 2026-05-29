@@ -3,6 +3,7 @@ export interface LoginAccount {
   avatar: string;
   expires: string;
   err?: string;
+  debugger?: unknown;
 }
 
 export interface BaseResp {

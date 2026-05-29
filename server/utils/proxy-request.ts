@@ -65,6 +65,7 @@ export async function proxyMpRequest(options: RequestOptions) {
   }
 
   let setCookies: string[] = [];
+  let responseBody: string | null = null;
 
   // 处理登录请求的 uuid cookie
   if (options.action === 'start_login') {
@@ -82,14 +83,16 @@ export async function proxyMpRequest(options: RequestOptions) {
       const mpSetCookies = mpResponse.headers.getSetCookie();
 
       const body = await mpResponse.clone().json();
-      console.log('[mp-login] bizlogin response summary:', {
-        status: mpResponse.status,
-        statusText: mpResponse.statusText,
-        hasRedirectUrl: typeof body?.redirect_url === 'string' && body.redirect_url.length > 0,
-        baseResp: body?.base_resp,
-        cookieNames: getCookieNames(mpSetCookies),
-        setCookieCount: mpSetCookies.length,
-      });
+      const loginDebugger = {
+        bizloginResponseSummary: {
+          status: mpResponse.status,
+          statusText: mpResponse.statusText,
+          hasRedirectUrl: typeof body?.redirect_url === 'string' && body.redirect_url.length > 0,
+          baseResp: body?.base_resp,
+          cookieNames: getCookieNames(mpSetCookies),
+          setCookieCount: mpSetCookies.length,
+        },
+      };
 
       const redirectUrl = body?.redirect_url;
       if (!redirectUrl || typeof redirectUrl !== 'string') {
@@ -101,14 +104,15 @@ export async function proxyMpRequest(options: RequestOptions) {
         throw new Error(`redirect_url 中未找到 token 参数: ${redirectUrl}`);
       }
 
-      console.log('[mp-login] token parsed:', {
-        tokenLength: token.length,
-      });
       const success = await cookieStore.setCookie(authKey, token, mpSetCookies);
       if (!success) {
         throw new Error('cookie 写入 KV 存储失败');
       }
-      console.log('[mp-login] cookie 写入成功');
+
+      responseBody = JSON.stringify({
+        ...body,
+        debugger: loginDebugger,
+      });
 
       setCookies = [
         `auth-key=${authKey}; Path=/; Expires=${dayjs().add(4, 'days').toString()}; Secure; HttpOnly`,
@@ -117,20 +121,30 @@ export async function proxyMpRequest(options: RequestOptions) {
         `uuid=EXPIRED; Path=/; Expires=${dayjs().subtract(1, 'days').toString()}; Secure; HttpOnly`,
       ];
     } catch (error) {
-      console.error('[mp-login] action(login) failed:', {
-        message: error instanceof Error ? error.message : String(error),
-        status: mpResponse.status,
-        statusText: mpResponse.statusText,
-        url: mpResponse.url,
-        cookieNames: getCookieNames(mpResponse.headers.getSetCookie()),
-        setCookieCount: mpResponse.headers.getSetCookie().length,
-      });
+      const mpSetCookies = mpResponse.headers.getSetCookie();
+      const message = error instanceof Error ? error.message : String(error);
+      const loginDebugger = {
+        actionLoginFailed: {
+          message,
+          status: mpResponse.status,
+          statusText: mpResponse.statusText,
+          url: mpResponse.url,
+          cookieNames: getCookieNames(mpSetCookies),
+          setCookieCount: mpSetCookies.length,
+        },
+      };
 
       // 登录失败时返回错误响应，而不是静默继续
-      return new Response(JSON.stringify({ base_resp: { ret: -1, err_msg: `登录处理失败: ${error}` } }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({
+          base_resp: { ret: -1, err_msg: `登录处理失败: ${message}` },
+          debugger: loginDebugger,
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
   }
 
@@ -154,8 +168,12 @@ export async function proxyMpRequest(options: RequestOptions) {
   setCookies.forEach(setCookie => {
     responseHeaders.append('set-cookie', setCookie);
   });
+  if (responseBody) {
+    responseHeaders.set('Content-Type', 'application/json');
+    responseHeaders.set('Content-Length', new TextEncoder().encode(responseBody).length.toString());
+  }
 
-  const finalResponse = new Response(mpResponse.body, {
+  const finalResponse = new Response(responseBody ?? mpResponse.body, {
     status: mpResponse.status,
     statusText: mpResponse.statusText,
     headers: responseHeaders,
