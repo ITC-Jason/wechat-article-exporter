@@ -10,3 +10,9 @@
 <img src="./assets/md2.png" >
 7. ***全选 -> 导出 JSON*** (Select All -> Export JSON)
 <img src="./assets/md3.png" >
+
+# Push command
+```bash
+git push origin HEAD
+git push github HEAD
+```
