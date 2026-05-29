@@ -3,6 +3,13 @@ import { request } from '#shared/utils/request';
 import { getCookieFromResponse, getCookiesFromRequest } from '~/server/utils/CookieStore';
 import { proxyMpRequest } from '~/server/utils/proxy-request';
 
+function getCookieNames(response: Response): string[] {
+  return response.headers
+    .getSetCookie()
+    .map(cookie => cookie.split(';')[0]?.split('=')[0]?.trim())
+    .filter((name): name is string => Boolean(name));
+}
+
 export default defineEventHandler(async event => {
   const cookie = getCookiesFromRequest(event);
 
@@ -34,6 +41,22 @@ export default defineEventHandler(async event => {
   // 从响应中取出唯一的 set-cookie (即上一步 `action=login` 标志所设置的 auth-key=xxx)
   const authKey = getCookieFromResponse('auth-key', response);
   if (!authKey) {
+    let responseBody = '';
+    try {
+      responseBody = await response.clone().text();
+    } catch (error) {
+      responseBody = `读取响应体失败: ${error instanceof Error ? error.message : String(error)}`;
+    }
+
+    console.error('[bizlogin] auth-key cookie not found:', {
+      status: response.status,
+      statusText: response.statusText,
+      contentType: response.headers.get('content-type'),
+      cookieNames: getCookieNames(response),
+      setCookieCount: response.headers.getSetCookie().length,
+      responseBody,
+    });
+
     return {
       err: '登录失败，请稍后重试',
     };

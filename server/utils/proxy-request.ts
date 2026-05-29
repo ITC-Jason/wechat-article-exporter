@@ -6,6 +6,12 @@ import { RequestOptions } from '~/server/types';
 import { cookieStore, getCookieFromStore } from '~/server/utils/CookieStore';
 import { logRequest, logResponse } from '~/server/utils/logger';
 
+function getCookieNames(cookies: string[]): string[] {
+  return cookies
+    .map(cookie => cookie.split(';')[0]?.split('=')[0]?.trim())
+    .filter((name): name is string => Boolean(name));
+}
+
 /**
  * 代理微信公众号请求
  * @description 备注：只有登录请求(`action=login`)中的 `set-cookie` 才会被写入到 CookieStore 中
@@ -73,8 +79,18 @@ export async function proxyMpRequest(options: RequestOptions) {
     // 提取出 token 和 cookies
     try {
       const authKey = crypto.randomUUID().replace(/-/g, '');
+      const mpSetCookies = mpResponse.headers.getSetCookie();
 
       const body = await mpResponse.clone().json();
+      console.log('[mp-login] bizlogin response summary:', {
+        status: mpResponse.status,
+        statusText: mpResponse.statusText,
+        hasRedirectUrl: typeof body?.redirect_url === 'string' && body.redirect_url.length > 0,
+        baseResp: body?.base_resp,
+        cookieNames: getCookieNames(mpSetCookies),
+        setCookieCount: mpSetCookies.length,
+      });
+
       const redirectUrl = body?.redirect_url;
       if (!redirectUrl || typeof redirectUrl !== 'string') {
         throw new Error(`登录响应中未找到 redirect_url，响应内容: ${JSON.stringify(body)}`);
@@ -85,12 +101,14 @@ export async function proxyMpRequest(options: RequestOptions) {
         throw new Error(`redirect_url 中未找到 token 参数: ${redirectUrl}`);
       }
 
-      console.log('token', token);
-      const success = await cookieStore.setCookie(authKey, token, mpResponse.headers.getSetCookie());
+      console.log('[mp-login] token parsed:', {
+        tokenLength: token.length,
+      });
+      const success = await cookieStore.setCookie(authKey, token, mpSetCookies);
       if (!success) {
         throw new Error('cookie 写入 KV 存储失败');
       }
-      console.log('cookie 写入成功');
+      console.log('[mp-login] cookie 写入成功');
 
       setCookies = [
         `auth-key=${authKey}; Path=/; Expires=${dayjs().add(4, 'days').toString()}; Secure; HttpOnly`,
@@ -99,7 +117,14 @@ export async function proxyMpRequest(options: RequestOptions) {
         `uuid=EXPIRED; Path=/; Expires=${dayjs().subtract(1, 'days').toString()}; Secure; HttpOnly`,
       ];
     } catch (error) {
-      console.error('action(login) failed:', error);
+      console.error('[mp-login] action(login) failed:', {
+        message: error instanceof Error ? error.message : String(error),
+        status: mpResponse.status,
+        statusText: mpResponse.statusText,
+        url: mpResponse.url,
+        cookieNames: getCookieNames(mpResponse.headers.getSetCookie()),
+        setCookieCount: mpResponse.headers.getSetCookie().length,
+      });
 
       // 登录失败时返回错误响应，而不是静默继续
       return new Response(JSON.stringify({ base_resp: { ret: -1, err_msg: `登录处理失败: ${error}` } }), {
