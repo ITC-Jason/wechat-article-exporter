@@ -9,6 +9,12 @@ import type { LogoutResponse } from '~/types/types';
 const loginAccount = useLoginAccount();
 const modal = useModal();
 
+function hasAuthKeyCookie(): boolean {
+  return document.cookie.split(';').some(item => item.trim().split('=')[0] === 'auth-key');
+}
+
+const hasAuthKey = computed(() => hasAuthKeyCookie());
+
 const now = ref(new Date());
 const distance = computed(() => {
   return (
@@ -77,15 +83,24 @@ function login() {
 
 const logoutBtnLoading = ref(false);
 
+function deleteAuthKeyCookie() {
+  document.cookie = 'auth-key=; path=/; max-age=0; secure';
+}
+
 async function logout() {
   logoutBtnLoading.value = true;
-  const { statusCode, statusText } = await request<LogoutResponse>('/api/web/mp/logout');
-  if (statusCode === 200) {
-    loginAccount.value = null;
-  } else {
-    alert(statusText);
+  try {
+    const { statusCode, statusText } = await request<LogoutResponse>('/api/web/mp/logout');
+    if (statusCode === 200) {
+      loginAccount.value = null;
+    } else {
+      console.error('微信端退出登录出错:', statusText);
+    }
+  } finally {
+    deleteAuthKeyCookie();
+    logoutBtnLoading.value = false;
+    window.location.reload();
   }
-  logoutBtnLoading.value = false;
 }
 
 let timer: number;
@@ -101,7 +116,7 @@ onUnmounted(() => {
 
 <template>
   <footer class="flex flex-col space-y-2 pt-3 border-t dark:border-slate-600">
-    <div v-if="loginAccount" class="space-y-3">
+    <div v-if="loginAccount && hasAuthKey" class="space-y-3">
       <div class="flex items-center space-x-2">
         <img
           v-if="loginAccount.avatar"

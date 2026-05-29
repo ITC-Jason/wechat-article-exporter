@@ -14,7 +14,7 @@ interface SearchBizQuery {
 export default defineEventHandler(async event => {
   const token = await getTokenFromStore(event);
   if (!token) {
-    return { base_resp: { ret: -1, err_msg: '未登录或登录已过期，请重新扫码登录' } };
+    return { base_resp: { ret: -1, err_msg: '未登录或登录已过期，请重新扫码登录！' } };
   }
 
   const query = getQuery<SearchBizQuery>(event);

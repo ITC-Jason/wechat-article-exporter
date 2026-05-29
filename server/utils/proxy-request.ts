@@ -115,7 +115,7 @@ export async function proxyMpRequest(options: RequestOptions) {
       });
 
       setCookies = [
-        `auth-key=${authKey}; Path=/; Expires=${dayjs().add(4, 'days').toString()}; Secure; HttpOnly`,
+        `auth-key=${authKey}; Path=/; Expires=${dayjs().add(4, 'days').toString()}; Secure`,
 
         // 登录成功后，删除浏览器的 uuid cookie
         `uuid=EXPIRED; Path=/; Expires=${dayjs().subtract(1, 'days').toString()}; Secure; HttpOnly`,
