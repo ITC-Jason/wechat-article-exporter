@@ -9,6 +9,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       aggridLicense: process.env.NUXT_AGGRID_LICENSE,
+      proxyList: process.env.NUXT_PROXY_LIST || '',
       sentry: {
         dsn: process.env.NUXT_SENTRY_DSN,
       },

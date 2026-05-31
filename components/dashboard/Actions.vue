@@ -43,7 +43,7 @@ const isCredentialActive = computed(() => credentialState.value === 'active');
     <!--      </UTooltip>-->
     <!--    </li>-->
 
-    <li>
+    <!-- <li>
       <UTooltip text="加入QQ群">
         <UIcon
           @click="modal.open(QQGroupModal)"
@@ -51,7 +51,7 @@ const isCredentialActive = computed(() => credentialState.value === 'active');
           class="size-7 text-zinc-400 hover:text-blue-500 cursor-pointer transition-colors"
         />
       </UTooltip>
-    </li>
+    </li> -->
 
     <!-- Credential -->
     <li>

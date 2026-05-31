@@ -4,6 +4,7 @@ import { PUBLIC_PROXY_LIST } from '~/config/public-proxy';
 import type { ParsedCredential } from '~/types/credential';
 import type { Preferences } from '~/types/preferences';
 import { bestConcurrencyCount } from '~/utils';
+import { resolveProxyList } from '~/utils/proxy-list';
 import { DEFAULT_OPTIONS } from './constants';
 import { ProxyManager } from './ProxyManager';
 import type { Callback, DownloaderStatus, DownloadOptions } from './types';
@@ -33,7 +34,11 @@ export class BaseDownloader {
   constructor(urls: string[], options: DownloadOptions = {}) {
     this.validateInputs(urls);
 
-    const proxies = (preferences.value as Preferences).privateProxyList || [];
+    const runtimeConfig = useRuntimeConfig();
+    const proxies = resolveProxyList(
+      String(runtimeConfig.public.proxyList ?? ''),
+      (preferences.value as Preferences).privateProxyList || [],
+    );
     if (proxies.length === 0) {
       // 如果没有配置私有代理，则使用公共代理
       proxies.push(...PUBLIC_PROXY_LIST);
