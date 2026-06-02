@@ -1,16 +1,17 @@
 <template>
   <UCard class="mx-4 mt-10">
     <template #header>
-      <h3 class="text-2xl font-semibold">代理节点</h3>
+      <h3 class="text-2xl font-semibold">{{ t('settings.proxy.title') }}</h3>
       <p class="text-sm text-slate-10 font-serif">
-        若此处留空，则网站将使用
-        <ExternalLink :href="docsWebSite + '/get-started/proxy.html'" text="公共代理" /> 进行资源下载。
+        {{ t('settings.proxy.emptyBefore') }}
+        <ExternalLink :href="docsWebSite + '/get-started/proxy.html'" :text="t('settings.proxy.publicProxy')" />
+        {{ t('settings.proxy.emptyAfter') }}
       </p>
       <p v-if="isEnvProxyConfigured" class="text-sm text-amber-600 mt-2">
-        当前已通过环境变量 NUXT_PROXY_LIST 配置代理，优先于此处保存的设置。
+        {{ t('settings.proxy.envHint') }}
       </p>
       <p>
-        <ExternalLink :href="docsWebSite + '/get-started/private-proxy.html'" text="如何搭建代理节点？" />
+        <ExternalLink :href="docsWebSite + '/get-started/private-proxy.html'" :text="t('settings.proxy.setupProxy')" />
       </p>
     </template>
 
@@ -20,21 +21,20 @@
         v-model="textareaValue"
         spellcheck="false"
         :readonly="isEnvProxyConfigured"
-        placeholder="请填写私有部署的代理地址，一行一个"
+        :placeholder="t('settings.proxy.placeholder')"
       ></textarea>
       <div class="flex-1 flex-shrink-0">
         <div class="my-5">
-          <p>代理节点地址要求：</p>
+          <p>{{ t('settings.proxy.requirements') }}</p>
           <ol>
             <li>
-              <p>1. 以 <code class="text-rose-500 font-mono">http/https</code> 开头的绝对路径地址。</p>
+              <p>{{ t('settings.proxy.requireAbsolute') }}</p>
               <p>
-                2. 该地址在使用时后面会自动拼接
-                <code class="text-rose-500 font-mono">?url=</code> 等参数，请确保格式正确。
+                {{ t('settings.proxy.requireQuery') }}
               </p>
             </li>
           </ol>
-          <p class="mt-3">代理示例：</p>
+          <p class="mt-3">{{ t('settings.proxy.example') }}</p>
           <p><code class="text-rose-500 font-mono">https://wproxy-01.deno.dev</code></p>
           <p><code class="text-rose-500 font-mono">https://wproxy-01.deno.dev/</code></p>
         </div>
@@ -59,6 +59,7 @@ import { parseProxyList, resolveProxyList } from '~/utils/proxy-list';
 
 const preferences: Ref<Preferences> = usePreferences() as unknown as Ref<Preferences>;
 const runtimeConfig = useRuntimeConfig();
+const { t } = useLocale();
 
 const textareaValue = ref('');
 const envProxyList = computed(() => parseProxyList(String(runtimeConfig.public.proxyList ?? '')));
@@ -74,7 +75,7 @@ onMounted(() => {
   try {
     const configuredProxyList = resolveProxyList(
       String(runtimeConfig.public.proxyList ?? ''),
-      (preferences.value as Preferences).privateProxyList,
+      (preferences.value as Preferences).privateProxyList
     );
     if (configuredProxyList.length > 0) {
       textareaValue.value = configuredProxyList.join('\n');
@@ -82,16 +83,21 @@ onMounted(() => {
   } catch (e) {}
 });
 
-const saveBtnText = ref('保存');
+const saveBtnState = ref<'idle' | 'saved' | 'env'>('idle');
+const saveBtnText = computed(() => {
+  if (saveBtnState.value === 'env') return t('settings.proxy.envSaveDisabled');
+  if (saveBtnState.value === 'saved') return t('common.saved');
+  return t('common.save');
+});
 async function save() {
   if (isEnvProxyConfigured.value) {
-    saveBtnText.value = '已通过环境变量配置，无需保存';
+    saveBtnState.value = 'env';
     return;
   }
-  saveBtnText.value = '保存成功';
+  saveBtnState.value = 'saved';
   setTimeout(() => {
     (preferences.value as Preferences).privateProxyList = proxyList.value;
-    saveBtnText.value = '保存';
+    saveBtnState.value = 'idle';
   }, 1000);
 }
 </script>

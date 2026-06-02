@@ -16,12 +16,13 @@ import { isDev } from '~/config';
 import { isChromeBrowser } from '~/utils';
 
 const runtimeConfig = useRuntimeConfig();
+const { t } = useLocale();
 
 ModuleRegistry.registerModules([AllEnterpriseModule]);
 LicenseManager.setLicenseKey(runtimeConfig.public.aggridLicense);
 
 if (!isChromeBrowser()) {
-  alert('为了更好的用户体验，推荐使用 Chrome 浏览器。');
+  alert(t('site.chromeWarning'));
 }
 </script>
 

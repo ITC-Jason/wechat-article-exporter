@@ -23,6 +23,7 @@ defineExpose({
 });
 
 const toast = toastFactory();
+const { t } = useLocale();
 
 const isOpen = ref(false);
 const articleHtml = ref('');
@@ -41,7 +42,7 @@ async function open(article: AppMsgEx) {
       (preferences.value as Preferences).exportConfig.exportHtmlIncludeComments
     );
   } else {
-    toast.warning('文章预览失败', `文章【${article.title}】还未拉取文章内容`);
+    toast.warning(t('toast.previewFailed'), t('toast.previewMissing', { title: article.title }));
   }
 }
 

@@ -61,6 +61,20 @@ export function formatTimeStamp(timestamp: number) {
 }
 
 // 格式化文章显示类型
-export function formatItemShowType(type: number) {
+export function formatItemShowType(type: number, t?: (key: string) => string) {
+  if (t) {
+    const keyMap: Record<number, string> = {
+      0: 'articleType.normal',
+      5: 'articleType.video',
+      6: 'articleType.music',
+      7: 'articleType.audio',
+      8: 'articleType.image',
+      10: 'articleType.text',
+      11: 'articleType.article',
+      17: 'articleType.short',
+    };
+    return keyMap[type] ? t(keyMap[type]) : t('article.unrecognized');
+  }
+
   return ITEM_SHOW_TYPE[type] || '未识别';
 }

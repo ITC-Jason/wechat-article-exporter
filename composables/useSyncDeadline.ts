@@ -4,6 +4,7 @@ import type { Preferences } from '~/types/preferences';
 
 export default () => {
   const preferences = usePreferences();
+  const { t } = useLocale();
 
   function getDeadline(): Dayjs {
     const syncDateRange = (preferences.value as unknown as Preferences).syncDateRange;
@@ -65,43 +66,43 @@ export default () => {
     return [
       {
         value: '24h',
-        label: '最近24小时',
+        label: t('settings.misc.range24h'),
       },
       {
         value: '1d',
-        label: '最近一天',
+        label: t('settings.misc.range1d'),
       },
       {
         value: '3d',
-        label: '最近三天',
+        label: t('settings.misc.range3d'),
       },
       {
         value: '7d',
-        label: '最近七天',
+        label: t('settings.misc.range7d'),
       },
       {
         value: '1m',
-        label: '最近一个月',
+        label: t('settings.misc.range1m'),
       },
       {
         value: '3m',
-        label: '最近三个月',
+        label: t('settings.misc.range3m'),
       },
       {
         value: '6m',
-        label: '最近半年',
+        label: t('settings.misc.range6m'),
       },
       {
         value: '1y',
-        label: '最近一年',
+        label: t('settings.misc.range1y'),
       },
       {
         value: 'all',
-        label: '全部',
+        label: t('settings.misc.rangeAll'),
       },
       {
         value: 'point',
-        label: '自定义时间',
+        label: t('settings.misc.rangePoint'),
       },
     ];
   }
@@ -112,7 +113,7 @@ export default () => {
   function getSyncRangeLabel(): string {
     const syncDateRange = (preferences.value as unknown as Preferences).syncDateRange;
     const option = getSelectOptions().find(o => o.value === syncDateRange);
-    return option?.label ?? '全部';
+    return option?.label ?? t('settings.misc.rangeAll');
   }
 
   /**

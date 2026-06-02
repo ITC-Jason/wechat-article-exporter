@@ -6,6 +6,7 @@ import { docsWebSite } from '~/config';
 import { gotoLink } from '~/utils';
 
 const modal = useModal();
+const { locale, nextLocaleName, t, toggleLocale } = useLocale();
 
 // CredentialDialog 相关变量
 const credentialsDialogOpen = ref(false);
@@ -60,7 +61,7 @@ const isCredentialActive = computed(() => credentialState.value === 'active');
         v-model:state="credentialState"
         @update:pending-count="credentialPendingCount = $event"
       />
-      <UTooltip text="抓取 Credentials">
+      <UTooltip :text="t('dashboard.actions.credentials')">
         <div class="relative">
           <UIcon
             @click="credentialsDialogOpen = true"
@@ -81,9 +82,23 @@ const isCredentialActive = computed(() => credentialState.value === 'active');
       </UTooltip>
     </li>
 
+    <!-- 语言切换 -->
+    <li>
+      <UTooltip :text="t('common.switchTo', { language: nextLocaleName })">
+        <UIcon
+          @click="toggleLocale"
+          name="i-lucide:languages"
+          :class="[
+            'size-7 cursor-pointer transition-colors',
+            locale === 'zh-CN' ? 'text-zinc-400 hover:text-blue-500' : 'text-blue-500 hover:text-blue-600',
+          ]"
+        />
+      </UTooltip>
+    </li>
+
     <!-- 文档 -->
     <li>
-      <UTooltip text="文档">
+      <UTooltip :text="t('dashboard.actions.docs')">
         <UIcon
           name="i-lucide:book-open"
           @click="gotoLink(docsWebSite)"
@@ -94,7 +109,7 @@ const isCredentialActive = computed(() => credentialState.value === 'active');
 
     <!-- GitHub -->
     <li>
-      <UTooltip text="GitHub">
+      <UTooltip :text="t('dashboard.actions.github')">
         <UIcon
           @click="gotoLink('https://github.com/wechat-article/wechat-article-exporter')"
           name="i-lucide:github"

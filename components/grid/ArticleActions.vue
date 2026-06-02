@@ -8,6 +8,7 @@ interface Props {
   };
 }
 const props = defineProps<Props>();
+const { t } = useLocale();
 
 function gotoLink() {
   props.params.onGotoLink && props.params.onGotoLink(props.params);
@@ -19,10 +20,10 @@ function preview() {
 
 <template>
   <div class="flex items-center justify-center">
-    <UTooltip text="访问原文" :popper="{ placement: 'top' }">
+    <UTooltip :text="t('common.visitOriginal')" :popper="{ placement: 'top' }">
       <UButton icon="i-lucide:external-link" color="blue" square variant="ghost" @click="gotoLink" />
     </UTooltip>
-    <UTooltip text="预览" :popper="{ placement: 'top' }">
+    <UTooltip :text="t('common.preview')" :popper="{ placement: 'top' }">
       <UButton
         :disabled="!params.data.contentDownload || params.data.downloading"
         icon="i-heroicons:fire-16-solid"

@@ -6,7 +6,7 @@
     >
       <template #header>
         <div class="flex justify-between items-center">
-          <h2 class="font-bold text-2xl">抓取 Credentials</h2>
+          <h2 class="font-bold text-2xl">{{ t('credentials.title') }}</h2>
         </div>
       </template>
 
@@ -18,9 +18,9 @@
           <template #item="{ item }">
             <div v-if="item.key === 'wxdown'" class="space-y-5">
               <p class="flex items-center text-sm">
-                <span class="text-rose-500 font-semibold">所需软件：</span>
+                <span class="text-rose-500 font-semibold">{{ t('credentials.requiredSoftware') }}</span>
                 <UButton @click="downloadProgram" variant="ghost" color="gray"
-                  >去下载 wxdown-service 程序
+                  >{{ t('credentials.downloadWxdown') }}
                   <UIcon name="i-lucide:arrow-up-right" class="size-5" />
                 </UButton>
               </p>
@@ -31,7 +31,7 @@
                   type="url"
                   v-model="wsURL"
                   :disabled="monitoring || wsMonitoring"
-                  placeholder="请输入 ws 监听地址"
+                  :placeholder="t('credentials.wsPlaceholder')"
                 />
                 <UButton
                   v-if="!wsMonitoring"
@@ -39,23 +39,23 @@
                   color="blue"
                   @click="startListenService(true)"
                 >
-                  开始监控
+                  {{ t('credentials.startMonitor') }}
                 </UButton>
                 <UButton v-else icon="i-line-md:loading-twotone-loop" color="green" @click="stopListenService"
-                  >监控中，结束监控</UButton
+                  >{{ t('credentials.monitoring') }}</UButton
                 >
               </div>
             </div>
             <div v-if="item.key === 'mitmproxy'">
               <p class="flex items-center text-sm">
-                <span class="text-rose-500 font-semibold">所需软件：</span>
+                <span class="text-rose-500 font-semibold">{{ t('credentials.requiredSoftware') }}</span>
                 <UButton @click="downloadPlugin" variant="ghost" color="gray"
-                  >去下载 mitmproxy 插件
+                  >{{ t('credentials.downloadMitmproxy') }}
                   <UIcon name="i-lucide:arrow-up-right" class="size-5" />
                 </UButton>
               </p>
               <div class="text-sm my-5">
-                <p class="flex justify-between items-end">执行以下命令启动 mitmproxy 服务并加载 credential.py 插件：</p>
+                <p class="flex justify-between items-end">{{ t('credentials.mitmCommand') }}</p>
                 <p class="flex justify-between items-center bg-black text-white p-2 my-2 rounded-md">
                   <code>mitmdump -s credential.py -q</code>
                   <UIcon v-if="copied" name="i-lucide:copy-check" />
@@ -73,7 +73,7 @@
                   color="gray"
                   v-model="apiKey"
                   :disabled="authorized || wsMonitoring"
-                  placeholder="请输入API Key"
+                  :placeholder="t('credentials.apiKeyPlaceholder')"
                 />
                 <UButton
                   class="px-5"
@@ -81,14 +81,14 @@
                   :loading="authorizeBtnLoading"
                   :disabled="!apiKey || authorized || wsMonitoring || monitoring"
                   @click="authorize"
-                  >认证</UButton
+                  >{{ t('credentials.auth') }}</UButton
                 >
 
                 <UButton v-if="!monitoring" :disabled="!authorized || wsMonitoring" color="blue" @click="start"
-                  >开始监控</UButton
+                  >{{ t('credentials.startMonitor') }}</UButton
                 >
                 <UButton v-else icon="i-line-md:loading-twotone-loop" color="green" @click="stop"
-                  >监控中，结束监控</UButton
+                  >{{ t('credentials.monitoring') }}</UButton
                 >
               </div>
             </div>
@@ -104,12 +104,12 @@
               <img :src="credential.avatar" alt="" />
             </div>
             <div class="flex-1">
-              <p>公众号名称：{{ credential.nickname || '--' }}</p>
+              <p>{{ t('credentials.nickname', { name: credential.nickname || '--' }) }}</p>
               <p>fakeid: {{ credential.biz }}</p>
-              <p>获取时间: {{ credential.time }}</p>
+              <p>{{ t('credentials.time', { time: credential.time }) }}</p>
               <div class="flex items-center justify-between mt-4">
-                <span v-if="credential.valid" class="font-sans font-bold text-green-500">有效</span>
-                <span v-else class="font-sans font-bold text-rose-500">已过期</span>
+                <span v-if="credential.valid" class="font-sans font-bold text-green-500">{{ t('common.valid') }}</span>
+                <span v-else class="font-sans font-bold text-rose-500">{{ t('common.expired') }}</span>
                 <UButton
                   size="xs"
                   :color="credential.added ? 'green' : 'blue'"
@@ -118,7 +118,7 @@
                   :loading="addingBiz === credential.biz"
                   @click="addAccount(credential)"
                 >
-                  {{ credential.added ? '已添加' : '添加公众号' }}
+                  {{ credential.added ? t('credentials.added') : t('credentials.addAccount') }}
                 </UButton>
               </div>
             </div>
@@ -128,7 +128,7 @@
               class="absolute top-3 right-3"
               @click="pullData(credential.biz)"
             >
-              拉取数据
+              {{ t('credentials.fetchData') }}
             </UButton>
           </li>
         </ul>
@@ -155,6 +155,7 @@ const emit = defineEmits<{
 
 const open = defineModel<boolean>('open', { default: false });
 const state = defineModel<CredentialState>('state', { default: 'inactive' });
+const { t } = useLocale();
 
 const pullArticleLoading = ref(false);
 async function pullData(fakeid: string) {
@@ -164,16 +165,16 @@ async function pullData(fakeid: string) {
   pullArticleLoading.value = false;
 }
 
-const tabs = [
+const tabs = computed(() => [
   {
     key: 'wxdown',
-    label: 'wxdown 程序版',
+    label: t('credentials.wxdownTab'),
   },
   {
     key: 'mitmproxy',
-    label: 'mitmproxy 插件版',
+    label: t('credentials.mitmproxyTab'),
   },
-];
+]);
 
 const { checkLogin } = useLoginCheck();
 
@@ -342,15 +343,15 @@ async function authorize() {
     if (response.status === 200) {
       authorized.value = true;
       localStorage.setItem('auto-detect-credentials:apikey', apiKey.value);
-      alert('认证成功');
+      alert(t('credentials.authSuccess'));
     } else {
       authorized.value = false;
       localStorage.removeItem('auto-detect-credentials:apikey');
-      alert('认证失败，请确认 API Key 是否正确');
+      alert(t('credentials.authFailed'));
     }
   } catch (error: any) {
     if (error.message === 'Failed to fetch') {
-      alert('mitmproxy 服务未启动');
+      alert(t('credentials.mitmproxyNotStarted'));
     } else {
       alert(error.message);
     }
@@ -534,14 +535,14 @@ async function addAccount(credential: ParsedCredential) {
   try {
     await getArticleList(account, 0);
     credential.added = true;
-    toast.success('公众号添加成功', `已成功添加公众号【${nickname}】`);
+    toast.success(t('credentials.addSuccess'), t('credentials.addSuccessDescription', { name: nickname }));
     // 通知其他视图（如公众号管理列表）立即刷新
     accountEventBus.emit('account-added', { fakeid: credential.biz });
   } catch (error: any) {
     if (error?.message === 'session expired') {
       modal.open(LoginModal);
     } else {
-      toast.error('添加公众号失败', error?.message || '未知错误');
+      toast.error(t('credentials.addFailed'), error?.message || t('common.unknownError'));
     }
   } finally {
     addingBiz.value = null;

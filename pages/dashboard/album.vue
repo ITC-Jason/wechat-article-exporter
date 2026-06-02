@@ -1,7 +1,7 @@
 <template>
   <div class="h-full">
     <Teleport defer to="#title">
-      <h1 class="text-[28px] leading-[34px] text-slate-12 dark:text-slate-50 font-bold">合集下载</h1>
+      <h1 class="text-[28px] leading-[34px] text-slate-12 dark:text-slate-50 font-bold">{{ t('album.title') }}</h1>
     </Teleport>
 
     <div class="flex flex-col h-full divide-y divide-gray-200">
@@ -17,14 +17,14 @@
               :options="selectedAccount?.albums || []"
               option-attribute="title"
               size="md"
-              placeholder="选择合集"
+              :placeholder="t('album.selectAlbum')"
             />
             <div>
               <Loader v-if="switchSortLoading" :size="24" class="animate-spin text-slate-500" />
               <div v-else class="flex space-x-2 w-fit" @click="toggleReverse">
                 <ArrowUpNarrowWide v-if="isReverse" />
                 <ArrowDownNarrowWide v-else />
-                <span>{{ isReverse ? '正序' : '倒序' }}</span>
+                <span>{{ isReverse ? t('album.ascending') : t('album.descending') }}</span>
               </div>
             </div>
             <UButton
@@ -34,7 +34,7 @@
               :loading="fetchAllArticlesBtnLoading"
               :disabled="!selectedAccount || !selectedAlbum || albumArticles.length === 0 || noMoreData"
               @click="fetchAllArticles"
-              >抓取全部文章链接</UButton
+              >{{ t('album.fetchAll') }}</UButton
             >
           </div>
         </div>
@@ -45,7 +45,7 @@
             size="md"
             :disabled="!selectedAccount || !selectedAlbum"
             @click="gotoLink(originalAlbumURL)"
-            >跳转到原始链接</UButton
+            >{{ t('album.openOriginal') }}</UButton
           >
           <UButton
             color="black"
@@ -58,12 +58,12 @@
             <Loader v-if="batchDownloadLoading" :size="20" class="animate-spin" />
             <span v-if="batchDownloadLoading"
               >{{ batchDownloadPhase }}:
-              <span v-if="batchDownloadPhase === '下载文章内容'"
+              <span v-if="batchDownloadPhase === t('album.downloadContentPhase')"
                 >{{ batchDownloadedCount }}/{{ selectedArticleCount }}</span
               >
-              <span v-if="batchDownloadPhase === '打包'">{{ batchPackedCount }}/{{ batchDownloadedCount }}</span>
+              <span v-if="batchDownloadPhase === t('album.packPhase')">{{ batchPackedCount }}/{{ batchDownloadedCount }}</span>
             </span>
-            <span v-else>批量下载</span>
+            <span v-else>{{ t('album.batchDownload') }}</span>
           </UButton>
         </div>
       </header>
@@ -84,7 +84,7 @@
               <span>{{ albumBaseInfo.nickname }}</span>
             </p>
             <p class="text-sm text-slate-10">
-              <span>{{ albumBaseInfo.article_count }}篇内容</span>
+              <span>{{ t('album.articleCount', { count: albumBaseInfo.article_count }) }}</span>
               <span v-if="albumBaseInfo.description"> · {{ albumBaseInfo.description }}</span>
             </p>
           </div>
@@ -112,7 +112,7 @@
             <p v-if="articleLoading" class="flex justify-center items-center mt-2 py-2">
               <Loader :size="28" class="animate-spin text-slate-500" />
             </p>
-            <p v-else-if="noMoreData" class="text-center mt-2 py-2 text-slate-400">已全部加载完毕</p>
+            <p v-else-if="noMoreData" class="text-center mt-2 py-2 text-slate-400">{{ t('common.noMoreData') }}</p>
           </div>
         </div>
       </main>
@@ -127,15 +127,16 @@ import { sleep } from '#shared/utils/helpers';
 import { request } from '#shared/utils/request';
 import AccountSelectorForAlbum from '~/components/selector/AccountSelectorForAlbum.vue';
 import { useDownloadAlbum } from '~/composables/useBatchDownload';
-import { websiteName } from '~/config';
 import { type MpAccount } from '~/store/v2/info';
 import type { AppMsgAlbumResult, ArticleItem, BaseInfo } from '~/types/album';
 import type { AppMsgAlbumInfo, DownloadableArticle } from '~/types/types';
 import { gotoLink } from '~/utils';
 import { formatAlbumTime } from '~/utils/album';
 
+const { t } = useLocale();
+
 useHead({
-  title: `合集下载 | ${websiteName}`,
+  title: computed(() => `${t('album.title')} | ${t('site.name')}`),
 });
 
 interface AccountInfo extends MpAccount {

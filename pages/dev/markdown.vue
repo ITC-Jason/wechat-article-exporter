@@ -2,25 +2,27 @@
   <div class="p-2 mx-auto container h-screen">
     <div class="rounded-lg border shadow-sm">
       <div class="flex flex-col space-y-1.5 p-6">
-        <h2 class="text-2xl font-semibold leading-none tracking-tight">HTML 转换为 Markdown</h2>
-        <p class="text-sm text-stone-500">将 HTML 代码转换为 Markdown 格式的试验场</p>
+        <h2 class="text-2xl font-semibold leading-none tracking-tight">{{ t('dev.markdown.title') }}</h2>
+        <p class="text-sm text-stone-500">{{ t('dev.markdown.description') }}</p>
       </div>
       <div class="p-6 pt-0">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="editor-wrapper border border-gray-200 dark:border-gray-800 rounded-md overflow-hidden">
             <div class="bg-gray-50 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-              <h3 class="font-medium text-gray-800 dark:text-gray-200">HTML 输入</h3>
+              <h3 class="font-medium text-gray-800 dark:text-gray-200">{{ t('dev.markdown.htmlInput') }}</h3>
             </div>
             <div class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4">
               <div class="flex gap-3 my-2">
                 <UInput
-                  placeholder="请输入缓存文章的URL"
+                  :placeholder="t('dev.markdown.urlPlaceholder')"
                   class="flex-1"
                   v-model="url"
                   icon="i-lucide:link"
                   color="gray"
                 />
-                <UButton :loading="loading" :disabled="btnDisabled" @click="loadCacheHtml" color="gray">加载</UButton>
+                <UButton :loading="loading" :disabled="btnDisabled" @click="loadCacheHtml" color="gray">
+                  {{ t('dev.markdown.load') }}
+                </UButton>
               </div>
             </div>
             <div>
@@ -29,7 +31,7 @@
           </div>
           <div class="editor-wrapper border border-gray-200 dark:border-gray-800 rounded-md overflow-hidden">
             <div class="bg-gray-50 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-              <h3 class="font-medium text-gray-800 dark:text-gray-200">Markdown 输出</h3>
+              <h3 class="font-medium text-gray-800 dark:text-gray-200">{{ t('dev.markdown.markdownOutput') }}</h3>
             </div>
             <div>
               <MonacoEditor v-model="mdCode" lang="markdown" class="h-[600px] py-3" :options="markdownEditorOptions" />
@@ -44,6 +46,8 @@
 <script setup lang="ts">
 import TurndownService from 'turndown';
 import { Exporter } from '~/utils/download/Exporter';
+
+const { t } = useLocale();
 
 const htmlCode = ref('<h1>Hello World</h1><p>This is a <strong>bold</strong> paragraph.</p>');
 const mdCode = ref('');

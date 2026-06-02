@@ -8,6 +8,7 @@ import { downloadArticleHTMLs, packHTMLAssets } from '~/utils';
  * 批量下载合集文章
  */
 export function useDownloadAlbum() {
+  const { t } = useLocale();
   const loading = ref(false);
   const phase = ref();
   const downloadedCount = ref(0);
@@ -17,12 +18,12 @@ export function useDownloadAlbum() {
     loading.value = true;
 
     try {
-      phase.value = '下载文章内容';
+      phase.value = t('album.downloadContentPhase');
       const results = await downloadArticleHTMLs(articles, (count: number) => {
         downloadedCount.value = count;
       });
 
-      phase.value = '打包';
+      phase.value = t('album.packPhase');
       const zip = new JSZip();
       for (const article of results) {
         await packHTMLAssets(

@@ -6,6 +6,7 @@ import toastFactory from '~/composables/toast';
 import type { GetAuthKeyResult } from '~/types/types';
 
 const toast = toastFactory();
+const { t } = useLocale();
 
 const loading = ref(false);
 const authKey = ref('');
@@ -17,7 +18,7 @@ async function getAuthKey() {
     if (resp.code === 0) {
       authKey.value = resp.data;
     } else {
-      toast.error('获取密钥失败', resp.msg);
+      toast.error(t('api.authFailed'), resp.msg);
     }
   } finally {
     loading.value = false;
@@ -28,19 +29,18 @@ async function getAuthKey() {
 <template>
   <div>
     <p>
-      为了方便第三方开发人员进行个性化定制，本网站将其主要功能（包括但不限于公众号查询、历史文章列表查询、文章下载等）提供
-      API 以供接入。
+      {{ t('api.summary1') }}
     </p>
     <p class="text-rose-500 font-medium mt-3">
-      注意：目前接入 API 免费，后续会根据实际情况动态调整，不排除会改为收费模式。
+      {{ t('api.notice') }}
     </p>
-    <p class="text-rose-500 font-medium mt-1">如果你的调用量比较大的话，推荐进行私有部署。</p>
+    <p class="text-rose-500 font-medium mt-1">{{ t('api.privateDeployHint') }}</p>
 
     <UAlert class="mt-10 mb-3">
       <template #title>
         <h3 class="font-medium text-xl flex items-center space-x-2">
           <UIcon name="i-lucide:key-square" />
-          <span>密钥</span>
+          <span>{{ t('api.authKey') }}</span>
         </h3>
       </template>
 
@@ -53,28 +53,28 @@ async function getAuthKey() {
           <!--            </p>-->
           <!--          </li>-->
           <li>
-            <p>以下所有 <code>API</code> 如无特殊说明，均需要携带密钥进行调用。密钥可通过以下两种方式传输：</p>
-            <p>a. 通过自定义请求头 <code class="text-rose-500 font-medium font-mono">X-Auth-Key</code></p>
-            <p>b. 通过 name 为 <code class="text-rose-500 font-medium font-mono">auth-key</code> 的 Cookie</p>
+            <p>{{ t('api.authKeyIntro') }}</p>
+            <p>{{ t('api.authHeader') }}</p>
+            <p>{{ t('api.authCookie') }}</p>
           </li>
           <li>
             <p>
               <span
-                >调用 API 的密钥与本网站的登录已集成在一起，也就是说，你在该网站扫码登录之后会自动刷新 API 密钥。</span
+                >{{ t('api.authIntegrated') }}</span
               >
             </p>
           </li>
           <li>
             <p>
-              <span>由于该密钥与网站用的同一套体系，网站的登录信息失效时，对应的 API 密钥也将失效。</span>
+              <span>{{ t('api.authExpires') }}</span>
             </p>
           </li>
         </ol>
         <UButton class="mt-3" color="blue" :loading="loading" @click="getAuthKey">
-          查询 API 密钥 (确保当前登录信息有效)
+          {{ t('api.queryAuthKey') }}
         </UButton>
         <div v-if="authKey">
-          <p class="mt-5 mb-2">当前密钥:</p>
+          <p class="mt-5 mb-2">{{ t('api.currentAuthKey') }}</p>
           <CodeSegment :code="authKey" lang="text" class="max-w-xl" />
         </div>
       </template>

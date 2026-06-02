@@ -37,7 +37,7 @@ export class BaseDownloader {
     const runtimeConfig = useRuntimeConfig();
     const proxies = resolveProxyList(
       String(runtimeConfig.public.proxyList ?? ''),
-      (preferences.value as Preferences).privateProxyList || [],
+      (preferences.value as Preferences).privateProxyList || []
     );
     if (proxies.length === 0) {
       // 如果没有配置私有代理，则使用公共代理

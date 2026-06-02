@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const usage = ref('');
+const { t } = useLocale();
 
 async function init() {
   const storageUsage = await navigator.storage.estimate();
@@ -28,6 +29,6 @@ onUnmounted(() => {
 
 <template>
   <p class="text-sm">
-    本地数据库占用约为 <span class="text-rose-500">{{ usage }}</span>
+    {{ t('storage.usage') }} <span class="text-rose-500">{{ usage }}</span>
   </p>
 </template>

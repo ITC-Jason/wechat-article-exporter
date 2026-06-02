@@ -1,4 +1,3 @@
-import { formatElapsedTime } from '#shared/utils/helpers';
 import toastFactory from '~/composables/toast';
 import type { Metadata } from '~/store/v2/metadata';
 import { Downloader } from '~/utils/download/Downloader';
@@ -26,6 +25,7 @@ export interface DownloadArticleOptions {
 
 export default (options: Partial<DownloadArticleOptions> = {}) => {
   const toast = toastFactory();
+  const { t } = useLocale();
 
   const loading = ref(false);
   const completed_count = ref(0);
@@ -33,10 +33,37 @@ export default (options: Partial<DownloadArticleOptions> = {}) => {
 
   let downloader: Downloader | null = null;
 
+  function formatElapsed(seconds: number) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    let result = '';
+    if (hours > 0) result += t('toast.elapsedHours', { count: hours });
+    if (minutes > 0) result += t('toast.elapsedMinutes', { count: minutes });
+    if (secs > 0 || result === '') result += t('toast.elapsedSeconds', { count: secs });
+    return result;
+  }
+
+  function warnNoSelection() {
+    toast.warning(t('common.tip'), t('toast.selectArticle'));
+  }
+
+  function logProgress(status: DownloaderStatus, includeDeleted = true) {
+    console.debug(
+      t(includeDeleted ? 'toast.downloadProgress' : 'toast.downloadProgressNoDeleted', {
+        pending: status.pending.length,
+        completed: status.completed.length,
+        failed: status.failed.length,
+        deleted: status.deleted.length,
+      })
+    );
+  }
+
   // 抓取文章内容(html)
   async function downloadArticleHTML(urls: string[]) {
     if (urls.length === 0) {
-      toast.warning('提示', '请先选择文章');
+      warnNoSelection();
       return;
     }
 
@@ -46,9 +73,7 @@ export default (options: Partial<DownloadArticleOptions> = {}) => {
 
       downloader = new Downloader(urls);
       downloader.on('download:progress', (url: string, success: boolean, status: DownloaderStatus) => {
-        console.debug(
-          `进度: (进行中:${status.pending.length} / 已完成:${status.completed.length} / 已失败:${status.failed.length} / 已删除:${status.deleted.length})`
-        );
+        logProgress(status);
         completed_count.value = status.completed.length;
         if (success && typeof options.onContent === 'function') {
           options.onContent(url);
@@ -65,24 +90,30 @@ export default (options: Partial<DownloadArticleOptions> = {}) => {
         }
       });
       downloader.on('download:begin', () => {
-        console.debug('开始抓取【文章内容】...');
+        console.debug('Start fetching article content...');
         completed_count.value = 0;
         total_count.value = urls.length;
       });
       downloader.on('download:finish', (seconds: number, status: DownloaderStatus) => {
-        console.debug('耗时:', formatElapsedTime(seconds));
+        const elapsed = formatElapsed(seconds);
+        console.debug('Elapsed:', elapsed);
         toast.success(
-          '【文章内容】抓取完成',
-          `本次抓取耗时 ${formatElapsedTime(seconds)}, 成功:${status.completed.length}, 失败:${status.failed.length}, 检测到已被删除:${status.deleted.length}`
+          t('toast.fetchComplete', { type: t('toast.typeContent') }),
+          t('toast.fetchElapsed', {
+            time: elapsed,
+            completed: status.completed.length,
+            failed: status.failed.length,
+            deleted: status.deleted.length,
+          })
         );
       });
       downloader.on('download:stop', () => {
-        toast.info('HTML下载任务已停止');
+        toast.info(t('toast.htmlStopped'));
       });
 
       await downloader.startDownload('html');
     } catch (error) {
-      console.error('【文章内容】抓取失败:', error);
+      console.error(t('toast.fetchFailed', { type: t('toast.typeContent') }), error);
       alert((error as Error).message);
     } finally {
       loading.value = false;
@@ -93,7 +124,7 @@ export default (options: Partial<DownloadArticleOptions> = {}) => {
   // 抓取文章阅读量、点赞量等元数据
   async function downloadArticleMetadata(urls: string[]) {
     if (urls.length === 0) {
-      toast.warning('提示', '请先选择文章');
+      warnNoSelection();
       return;
     }
 
@@ -103,9 +134,7 @@ export default (options: Partial<DownloadArticleOptions> = {}) => {
 
       downloader = new Downloader(urls);
       downloader.on('download:progress', (url: string, success: boolean, status: DownloaderStatus) => {
-        console.debug(
-          `进度: (进行中:${status.pending.length} / 已完成:${status.completed.length} / 已失败:${status.failed.length} / 已删除:${status.deleted.length})`
-        );
+        logProgress(status);
         completed_count.value = status.completed.length;
       });
       downloader.on('download:metadata', (url: string, metadata: Metadata) => {
@@ -124,21 +153,27 @@ export default (options: Partial<DownloadArticleOptions> = {}) => {
         }
       });
       downloader.on('download:begin', () => {
-        console.debug('开始抓取【阅读量】...');
+        console.debug('Start fetching reads...');
         completed_count.value = 0;
         total_count.value = urls.length;
       });
       downloader.on('download:finish', (seconds: number, status: DownloaderStatus) => {
-        console.debug('耗时:', formatElapsedTime(seconds));
+        const elapsed = formatElapsed(seconds);
+        console.debug('Elapsed:', elapsed);
         toast.success(
-          '【阅读量】抓取完成',
-          `本次抓取耗时 ${formatElapsedTime(seconds)}, 成功:${status.completed.length}, 失败:${status.failed.length}, 检测到已被删除:${status.deleted.length}`
+          t('toast.fetchComplete', { type: t('toast.typeMetadata') }),
+          t('toast.fetchElapsed', {
+            time: elapsed,
+            completed: status.completed.length,
+            failed: status.failed.length,
+            deleted: status.deleted.length,
+          })
         );
       });
 
       await downloader.startDownload('metadata');
     } catch (error) {
-      console.error('【阅读量】抓取失败:', error);
+      console.error(t('toast.fetchFailed', { type: t('toast.typeMetadata') }), error);
       alert((error as Error).message);
     } finally {
       loading.value = false;
@@ -149,7 +184,7 @@ export default (options: Partial<DownloadArticleOptions> = {}) => {
   // 抓取文章留言数据
   async function downloadArticleComment(urls: string[]) {
     if (urls.length === 0) {
-      toast.warning('提示', '请先选择文章');
+      warnNoSelection();
       return;
     }
 
@@ -159,30 +194,33 @@ export default (options: Partial<DownloadArticleOptions> = {}) => {
 
       downloader = new Downloader(urls);
       downloader.on('download:progress', (url: string, success: boolean, status: DownloaderStatus) => {
-        console.debug(
-          `进度: (进行中:${status.pending.length} / 已完成:${status.completed.length} / 已失败:${status.failed.length} / 已删除:${status.deleted.length})`
-        );
+        logProgress(status);
         completed_count.value = status.completed.length;
         if (success && typeof options.onComment === 'function') {
           options.onComment(url);
         }
       });
       downloader.on('download:begin', () => {
-        console.debug('开始抓取【留言内容】...');
+        console.debug('Start fetching comments...');
         completed_count.value = 0;
         total_count.value = urls.length;
       });
       downloader.on('download:finish', (seconds: number, status: DownloaderStatus) => {
-        console.debug('耗时:', formatElapsedTime(seconds));
+        const elapsed = formatElapsed(seconds);
+        console.debug('Elapsed:', elapsed);
         toast.success(
-          '【留言内容】抓取完成',
-          `本次抓取耗时 ${formatElapsedTime(seconds)}, 成功:${status.completed.length}, 失败:${status.failed.length}`
+          t('toast.fetchComplete', { type: t('toast.typeComment') }),
+          t('toast.fetchElapsedNoDeleted', {
+            time: elapsed,
+            completed: status.completed.length,
+            failed: status.failed.length,
+          })
         );
       });
 
       await downloader.startDownload('comments');
     } catch (error) {
-      console.error('【留言内容】抓取失败:', error);
+      console.error(t('toast.fetchFailed', { type: t('toast.typeComment') }), error);
       alert((error as Error).message);
     } finally {
       loading.value = false;
@@ -193,7 +231,7 @@ export default (options: Partial<DownloadArticleOptions> = {}) => {
   // 修复单篇文章fakeid
   async function fixSingleFakeidTask(urls: string[]) {
     if (urls.length === 0) {
-      toast.warning('提示', '请先选择文章');
+      warnNoSelection();
       return;
     }
 
@@ -203,33 +241,36 @@ export default (options: Partial<DownloadArticleOptions> = {}) => {
 
       downloader = new Downloader(urls);
       downloader.on('download:progress', (url: string, success: boolean, status: DownloaderStatus) => {
-        console.debug(
-          `进度: (进行中:${status.pending.length} / 已完成:${status.completed.length} / 已失败:${status.failed.length})`
-        );
+        logProgress(status, false);
         completed_count.value = status.completed.length;
       });
       downloader.on('download:begin', () => {
-        console.debug('开始修复 fakeid ...');
+        console.debug('Start fixing fakeid...');
         completed_count.value = 0;
         total_count.value = urls.length;
       });
       downloader.on('fix:fakeid', (url: string, fakeid: string) => {
-        console.debug(`${url} 修复成功 fakeid: ${fakeid}`);
+        console.debug(`${url} fixed fakeid: ${fakeid}`);
         if (typeof options.onFakeID === 'function') {
           options.onFakeID(url, fakeid);
         }
       });
       downloader.on('download:finish', (seconds: number, status: DownloaderStatus) => {
-        console.debug('耗时:', formatElapsedTime(seconds));
+        const elapsed = formatElapsed(seconds);
+        console.debug('Elapsed:', elapsed);
         toast.success(
-          '【fakeid】修复完成',
-          `本次耗时 ${formatElapsedTime(seconds)}, 成功:${status.completed.length}, 失败:${status.failed.length}`
+          t('toast.fetchComplete', { type: 'fakeid' }),
+          t('toast.fixElapsed', {
+            time: elapsed,
+            completed: status.completed.length,
+            failed: status.failed.length,
+          })
         );
       });
 
       await downloader.startDownload('fakeid');
     } catch (error) {
-      console.error('【fakeid】修复失败:', error);
+      console.error(t('toast.fetchFailed', { type: 'fakeid' }), error);
       alert((error as Error).message);
     } finally {
       loading.value = false;

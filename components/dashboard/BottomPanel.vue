@@ -8,6 +8,7 @@ import type { LogoutResponse } from '~/types/types';
 
 const loginAccount = useLoginAccount();
 const modal = useModal();
+const { t } = useLocale();
 
 function hasAuthKeyCookie(): boolean {
   return document.cookie.split(';').some(item => item.trim().split('=')[0] === 'auth-key');
@@ -28,42 +29,42 @@ const distance = computed(() => {
             setTimeout(() => {
               loginAccount.value = null;
             }, 0);
-            return '已过期';
+            return t('common.expired');
           }
 
           switch (token) {
             case 'aboutXHours':
-              return '大约' + count + '个小时';
+              return t('dashboard.bottom.about', { count, unit: t('common.hours') });
             case 'aboutXMonths':
-              return '大约' + count + '个月';
+              return t('dashboard.bottom.about', { count, unit: t('common.months') });
             case 'aboutXWeeks':
-              return '大约' + count + '周';
+              return t('dashboard.bottom.about', { count, unit: t('common.weeks') });
             case 'aboutXYears':
-              return '大约' + count + '年';
+              return t('dashboard.bottom.about', { count, unit: t('common.years') });
             case 'lessThanXMinutes':
-              return '小于' + count + '分钟';
+              return t('dashboard.bottom.lessThan', { count, unit: t('common.minutes') });
             case 'almostXYears':
-              return '接近' + count + '年';
+              return t('dashboard.bottom.closeTo', { count });
             case 'halfAMinute':
-              return '半分钟';
+              return t('dashboard.bottom.halfMinute');
             case 'lessThanXSeconds':
-              return '小于' + count + '秒';
+              return t('dashboard.bottom.lessThan', { count, unit: t('common.seconds') });
             case 'overXYears':
-              return '超过' + count + '年';
+              return t('dashboard.bottom.over', { count });
             case 'xDays':
-              return count + '天';
+              return `${count}${t('common.days')}`;
             case 'xHours':
-              return count + '个小时';
+              return `${count}${t('common.hours')}`;
             case 'xMinutes':
-              return count + '分钟';
+              return `${count}${t('common.minutes')}`;
             case 'xMonths':
-              return count + '个月';
+              return `${count}${t('common.months')}`;
             case 'xSeconds':
-              return count + '秒';
+              return `${count}${t('common.seconds')}`;
             case 'xWeeks':
-              return count + '周';
+              return `${count}${t('common.weeks')}`;
             case 'xYears':
-              return count + '年';
+              return `${count}${t('common.years')}`;
             default:
               return 'unknown';
           }
@@ -73,8 +74,8 @@ const distance = computed(() => {
   );
 });
 const warning = computed(() => {
-  const value = distance.value;
-  return value === '已过期' || value.includes('分钟') || value.includes('秒');
+  if (!loginAccount.value) return false;
+  return new Date(loginAccount.value.expires).getTime() - now.value.getTime() < 60 * 60 * 1000;
 });
 
 function login() {
@@ -94,7 +95,7 @@ async function logout() {
     if (statusCode === 200) {
       loginAccount.value = null;
     } else {
-      console.error('微信端退出登录出错:', statusText);
+      console.error(t('dashboard.bottom.logoutError'), statusText);
     }
   } finally {
     deleteAuthKeyCookie();
@@ -140,16 +141,16 @@ onUnmounted(() => {
           :loading="logoutBtnLoading"
           class="bg-slate-10 hover:bg-rose-500 disabled:bg-rose-500"
           @click="logout"
-          >退出
+          >{{ t('dashboard.bottom.logout') }}
         </UButton>
       </div>
       <div class="text-sm">
-        <span>登录信息过期时间还剩: </span>
+        <span>{{ t('dashboard.bottom.expiresIn') }}</span>
         <span class="font-mono" :class="warning ? 'text-rose-500' : 'text-green-500'">{{ distance }}</span>
       </div>
     </div>
     <div v-else>
-      <UButton color="gray" variant="solid" @click="login">登录公众号</UButton>
+      <UButton color="gray" variant="solid" @click="login">{{ t('dashboard.bottom.login') }}</UButton>
     </div>
     <StorageUsage />
   </footer>

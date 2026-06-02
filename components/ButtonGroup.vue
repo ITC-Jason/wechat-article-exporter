@@ -1,13 +1,14 @@
 <template>
   <UDropdown :items="items" :popper="{ placement: 'bottom-start' }">
     <slot>
-      <UButton color="white" label="导出" trailing-icon="i-heroicons-chevron-down-20-solid" />
+      <UButton color="white" :label="t('common.export')" trailing-icon="i-heroicons-chevron-down-20-solid" />
     </slot>
   </UDropdown>
 </template>
 
 <script setup lang="ts">
 const emit = defineEmits();
+const { t } = useLocale();
 
 interface Item {
   label: string;

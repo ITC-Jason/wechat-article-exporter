@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import BottomPanel from '~/components/dashboard/BottomPanel.vue';
 import NavMenus from '~/components/dashboard/NavMenus.vue';
-import { websiteName } from '~/config';
+
+const { t } = useLocale();
 </script>
 
 <template>
@@ -10,7 +11,7 @@ import { websiteName } from '~/config';
   >
     <!-- 网站标题 & Logo -->
     <div class="flex items-center h-[60px]">
-      <NuxtLink to="/" class="px-2 font-bold text-xl">{{ websiteName }}</NuxtLink>
+      <NuxtLink to="/" class="px-2 font-bold text-xl">{{ t('site.name') }}</NuxtLink>
     </div>
 
     <!-- 导航菜单 -->

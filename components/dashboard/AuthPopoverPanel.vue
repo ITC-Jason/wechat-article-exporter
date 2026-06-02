@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { loggedIn, user, clear, openInPopup, session } = useUserSession();
+const { t } = useLocale();
 
 const open = defineModel<boolean>('open', { default: false });
 
@@ -34,7 +35,7 @@ function closePanel(): void {
 const actions: Action[] = [
   {
     id: 'profile',
-    name: '个人中心',
+    name: 'auth.profile',
     onClick: async () => {
       closePanel();
       navigateTo('/dashboard/profile');
@@ -42,7 +43,7 @@ const actions: Action[] = [
   },
   {
     id: 'logout',
-    name: '退出',
+    name: 'auth.logout',
     onClick: async () => {
       closePanel();
       await clear();
@@ -77,7 +78,7 @@ const actions: Action[] = [
           <UButton
             :ui="{ rounded: 'rounded-full', padding: { sm: 'px-5' } }"
             class="flex gap-2 items-center rounded-full border-2 border-primary text-primary font-medium bg-white hover:bg-primary hover:text-white transition-colors px-5 py-1.5 text-sm"
-            >订阅 Pro 会员 (10元/月)</UButton
+            >{{ t('auth.subscribePro') }}</UButton
           >
         </div>
       </div>
@@ -88,7 +89,7 @@ const actions: Action[] = [
             :key="action.id"
             class="px-4 border-t border-gray-200/50 flex justify-between items-center hover:bg-gray-100/60"
           >
-            <a @click="action.onClick" class="flex-1 py-2.5 cursor-pointer">{{ action.name }}</a>
+            <a @click="action.onClick" class="flex-1 py-2.5 cursor-pointer">{{ t(action.name) }}</a>
           </li>
         </ul>
       </div>
@@ -96,7 +97,7 @@ const actions: Action[] = [
 
     <!-- Providers -->
     <div v-else class="py-5 flex flex-col p-3 min-w-60">
-      <p class="font-serif">Log into with</p>
+      <p class="font-serif">{{ t('auth.loginWith') }}</p>
       <div class="space-y-3 my-3">
         <!-- GitHub -->
         <UButton @click="loginWithGitHub" block color="white" size="xl" icon="i-logos:github-icon">GitHub</UButton>

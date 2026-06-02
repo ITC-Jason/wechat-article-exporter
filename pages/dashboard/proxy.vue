@@ -1,24 +1,24 @@
 <template>
   <div class="h-full">
     <Teleport defer to="#title">
-      <h1 class="text-[28px] leading-[34px] text-slate-12 dark:text-slate-50 font-bold">公共代理</h1>
+      <h1 class="text-[28px] leading-[34px] text-slate-12 dark:text-slate-50 font-bold">{{ t('proxy.title') }}</h1>
     </Teleport>
 
     <div class="flex flex-col h-full divide-y divide-gray-200">
       <!-- header -->
       <header class="px-4 py-5 sm:px-6">
         <div class="flex justify-between items-center mb-3">
-          <h2 class="text-2xl font-semibold">统计信息</h2>
+          <h2 class="text-2xl font-semibold">{{ t('proxy.stats') }}</h2>
 
-          <p class="font-serif font-bold">可用: {{ totalSuccess }}，不可用: {{ totalFailure }}</p>
+          <p class="font-serif font-bold">{{ t('proxy.available', { success: totalSuccess, failure: totalFailure }) }}</p>
         </div>
         <div class="flex justify-between items-center">
           <p class="text-rose-500 text-sm">
-            警告: 公共代理资源有限，请合理使用。 若需抓取大量数据，请搭建自己的私有代理节点。<br />
-            若发现某ip存在滥用公共代理从而导致官网无法使用，将有可能被封禁。
+            {{ t('proxy.warning') }}<br />
+            {{ t('proxy.abuseWarning') }}
           </p>
           <p class="mt-2 px-3 py-2 text-sm font-semibold text-amber-700 bg-amber-50 border border-amber-300 rounded-md dark:text-amber-300 dark:bg-amber-900/30 dark:border-amber-700">
-            所有代理额度将在每天早上 8:00 刷新。
+            {{ t('proxy.quotaRefresh') }}
           </p>
           <UPopover :popper="{ placement: 'left-start', arrow: true }">
             <UButton
@@ -30,15 +30,15 @@
             <template #panel>
               <div class="p-4 space-y-3 max-h-80 overflow-y-scroll">
                 <div>
-                  <p>当前IP:</p>
+                  <p>{{ t('proxy.currentIP') }}</p>
                   <code class="font-medium" :class="hasBlocked ? 'text-rose-500' : 'text-green-500'">
                     {{ currentIP }}
                   </code>
                 </div>
                 <div>
                   <p class="flex justify-between items-center min-w-64">
-                    <span>已被封禁IP:</span>
-                    <span class="text-xs text-gray-500">若存在误伤，请联系开发者</span>
+                    <span>{{ t('proxy.blockedIP') }}</span>
+                    <span class="text-xs text-gray-500">{{ t('proxy.falsePositive') }}</span>
                   </p>
                   <ul>
                     <li v-for="ip in blockedIPS" :key="ip">
@@ -67,11 +67,12 @@
 import { Loader } from 'lucide-vue-next';
 import { request } from '#shared/utils/request';
 import ProxyMetrics from '~/components/ProxyMetrics.vue';
-import { websiteName } from '~/config';
 import type { AccountMetric } from '~/types/proxy';
 
+const { t } = useLocale();
+
 useHead({
-  title: `公共代理 | ${websiteName}`,
+  title: computed(() => `${t('proxy.title')} | ${t('site.name')}`),
 });
 
 const loading = ref(false);
@@ -109,7 +110,7 @@ onMounted(async () => {
       currentIP.value = data.ip;
     }),
     request<{ ips: string[] } | string[]>('/api/web/worker/blocked-ip-list').then(data => {
-      blockedIPS.value = Array.isArray(data) ? data : (data.ips || []);
+      blockedIPS.value = Array.isArray(data) ? data : data.ips || [];
     }),
   ]);
 });

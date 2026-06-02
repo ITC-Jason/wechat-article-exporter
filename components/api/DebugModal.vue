@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import type { FormError } from '#ui/types';
 import CodeSegment from '~/components/api/CodeSegment.vue';
-import { apis } from '~/config/public-apis';
+import { getApis } from '~/config/public-apis';
 
 interface Props {
   initialSelected: string;
 }
 const props = defineProps<Props>();
+const { t } = useLocale();
+const apis = computed(() => getApis(t));
 
 const isOpen = ref(false);
-const selectedApi = ref(apis[0]);
+const selectedApi = ref(apis.value[0]);
 
 const payload: Ref<Record<string, any>> = ref({});
 
@@ -17,7 +19,7 @@ const host = window.location.protocol + '//' + window.location.host;
 
 function onOpen() {
   isOpen.value = true;
-  selectedApi.value = apis.find(api => api.name === props.initialSelected)!;
+  selectedApi.value = apis.value.find(api => api.name === props.initialSelected) ?? apis.value[0];
 }
 
 function apiChange() {
@@ -40,13 +42,13 @@ function validate(state: Record<string, any>): FormError[] {
 
   selectedApi.value.params.forEach(param => {
     if (param.required && isEmpty(param.name, state)) {
-      errors.push({ path: param.name, message: param.name + '不能为空' });
+      errors.push({ path: param.name, message: t('api.notEmpty', { name: param.name }) });
     }
     if (!isEmpty(param.name, state) && param.type === 'Int') {
       if (Number.isNaN(parseInt(state[param.name]))) {
-        errors.push({ path: param.name, message: param.name + '格式不正确' });
+        errors.push({ path: param.name, message: t('api.badFormat', { name: param.name }) });
       } else if (parseInt(state[param.name]) < 0) {
-        errors.push({ path: param.name, message: param.name + '不得小于0' });
+        errors.push({ path: param.name, message: t('api.minZero', { name: param.name }) });
       }
     }
   });
@@ -90,7 +92,7 @@ function submit() {
 
 <template>
   <div>
-    <UTooltip text="在线调试" :popper="{ placement: 'top' }">
+    <UTooltip :text="t('api.onlineDebug')" :popper="{ placement: 'top' }">
       <UButton color="blue" variant="ghost" square @click="onOpen" icon="i-lucide:bug-play"></UButton>
     </UTooltip>
 
@@ -104,12 +106,12 @@ function submit() {
         }"
       >
         <template #header>
-          <h1 class="font-semibold text-2xl">在线接口调试工具</h1>
+          <h1 class="font-semibold text-2xl">{{ t('api.debugTitle') }}</h1>
         </template>
 
         <div class="space-y-5">
           <div class="flex items-center gap-3">
-            <span>选择接口: </span>
+            <span>{{ t('api.selectApi') }}</span>
             <USelectMenu
               class="flex-1"
               v-model="selectedApi"
@@ -147,18 +149,18 @@ function submit() {
 
           <div class="space-y-5">
             <div>
-              <p class="font-semibold mb-2">请求URL:</p>
+              <p class="font-semibold mb-2">{{ t('api.requestUrl') }}</p>
               <p class="font-mono border p-2 rounded-md">
                 <span class="text-gray-400">{{ host }}</span>
                 <span class="font-semibold">{{ selectedApi.url }}</span>
               </p>
             </div>
             <div>
-              <p class="font-semibold mb-2">请求方式:</p>
+              <p class="font-semibold mb-2">{{ t('api.method') }}</p>
               <p class="font-mono border p-2 rounded-md">{{ selectedApi.method }}</p>
             </div>
             <div>
-              <p class="font-semibold mb-2">参数:</p>
+              <p class="font-semibold mb-2">{{ t('api.params') }}</p>
               <UForm :state="payload" :validate="validate" @submit="submit" class="space-y-3">
                 <UFormGroup
                   v-for="p in selectedApi.params"
@@ -170,15 +172,15 @@ function submit() {
                   <UInput
                     v-model="payload[p.name]"
                     :type="p.type === 'Int' ? 'number' : 'text'"
-                    :placeholder="p.label + (p.remark ? '，' + p.remark : '')"
+                    :placeholder="p.label + (p.remark ? ', ' + p.remark : '')"
                   />
                 </UFormGroup>
-                <UButton type="submit" color="black" class="px-5" :loading="btnLoading">提交</UButton>
+                <UButton type="submit" color="black" class="px-5" :loading="btnLoading">{{ t('common.submit') }}</UButton>
               </UForm>
             </div>
           </div>
           <div v-if="hasResponse">
-            <h3 class="font-bold text-2xl">响应</h3>
+            <h3 class="font-bold text-2xl">{{ t('common.response') }}</h3>
             <CodeSegment :code="resp!" :lang="typeof resp === 'object' ? 'json' : 'xml'" />
           </div>
         </div>

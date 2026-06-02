@@ -12,6 +12,7 @@ interface Props {
   };
 }
 const props = defineProps<Props>();
+const { t } = useLocale();
 
 function sync() {
   props.params.onSync && props.params.onSync(props.params);
@@ -27,7 +28,7 @@ const isLoading = computed(() => props.params.isSyncing && props.params.node.id 
   <div class="flex items-center justify-center gap-3">
     <UButton v-if="isLoading" color="green" size="xs" variant="solid" @click="stop">
       <Loader :size="14" class="animate-spin" />
-      停止</UButton
+      {{ t('common.stop') }}</UButton
     >
     <UButton
       v-else

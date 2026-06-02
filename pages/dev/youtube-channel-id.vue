@@ -1,19 +1,19 @@
 <template>
   <div class="p-2 mx-auto container">
     <p class="flex justify-between">
-      <span>频道地址: </span>
-      <UBadge>有效地址: {{ validURLs.length }}</UBadge>
+      <span>{{ t('dev.youtube.channelUrl') }}</span>
+      <UBadge>{{ t('dev.youtube.validUrl', { count: validURLs.length }) }}</UBadge>
     </p>
-    <UTextarea class="my-2" v-model="url" placeholder="请输入youtube频道地址,每行一个" autoresize />
+    <UTextarea class="my-2" v-model="url" :placeholder="t('dev.youtube.urlPlaceholder')" autoresize />
     <UButton class="px-5" @click="submit" :loading="btnLoading" :disabled="validURLs.length === 0">{{
-      btnLoading ? '提取中' : '提取'
+      btnLoading ? t('dev.youtube.extracting') : t('dev.youtube.extract')
     }}</UButton>
 
     <p class="mt-10 flex justify-between">
-      <span>提取结果:</span>
-      <UBadge>有效频道ID: {{ channelIDs.length }}</UBadge>
+      <span>{{ t('dev.youtube.result') }}</span>
+      <UBadge>{{ t('dev.youtube.validChannelId', { count: channelIDs.length }) }}</UBadge>
     </p>
-    <UTextarea class="pb-5 my-2" v-model="channelID" placeholder="频道id提取结果" readonly autoresize />
+    <UTextarea class="pb-5 my-2" v-model="channelID" :placeholder="t('dev.youtube.resultPlaceholder')" readonly autoresize />
   </div>
 </template>
 
@@ -25,6 +25,7 @@ definePageMeta({
 const url = ref('');
 const channelID = ref('');
 const btnLoading = ref(false);
+const { t } = useLocale();
 
 const validURLs = computed(() => {
   return url.value

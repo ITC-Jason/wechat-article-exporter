@@ -1,26 +1,48 @@
-import { formatElapsedTime } from '#shared/utils/helpers';
 import toastFactory from '~/composables/toast';
 import { Exporter } from '~/utils/download/Exporter';
 import type { ExporterStatus } from '~/utils/download/types';
 
 export default () => {
   const toast = toastFactory();
+  const { t } = useLocale();
 
   const loading = ref(false);
-  const phase = ref('导出中');
+  const phase = ref(t('toast.phaseExporting'));
   const completed_count = ref(0);
   const total_count = ref(0);
+
+  function formatElapsed(seconds: number) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    let result = '';
+    if (hours > 0) result += t('toast.elapsedHours', { count: hours });
+    if (minutes > 0) result += t('toast.elapsedMinutes', { count: minutes });
+    if (secs > 0 || result === '') result += t('toast.elapsedSeconds', { count: secs });
+    return result;
+  }
+
+  function warnNoSelection() {
+    toast.warning(t('common.tip'), t('toast.selectArticle'));
+  }
+
+  function notifyExportDone(type: string, seconds: number) {
+    const elapsed = formatElapsed(seconds);
+    console.debug('Elapsed:', elapsed);
+    toast.success(t('toast.exportDone', { type }), t('toast.exportElapsed', { time: elapsed }));
+  }
 
   // 导出 excel
   async function export2excel(urls: string[]) {
     if (urls.length === 0) {
-      toast.warning('提示', '请先选择文章');
+      warnNoSelection();
       return;
     }
 
     const manager = new Exporter(urls);
     manager.on('export:begin', () => {
-      phase.value = '导出中';
+      phase.value = t('toast.phaseExporting');
       completed_count.value = 0;
       total_count.value = 0;
     });
@@ -31,15 +53,14 @@ export default () => {
       completed_count.value = num;
     });
     manager.on('export:finish', (seconds: number) => {
-      console.debug('耗时:', formatElapsedTime(seconds));
-      toast.success('Excel 导出完成', `本次导出耗时 ${formatElapsedTime(seconds)}`);
+      notifyExportDone('Excel', seconds);
     });
 
     try {
       loading.value = true;
       await manager.startExport('excel');
     } catch (error) {
-      console.error('导出任务失败:', error);
+      console.error(t('toast.taskFailed'), error);
       alert((error as Error).message);
     } finally {
       loading.value = false;
@@ -49,13 +70,13 @@ export default () => {
   // 导出 json
   async function export2json(urls: string[]) {
     if (urls.length === 0) {
-      toast.warning('提示', '请先选择文章');
+      warnNoSelection();
       return;
     }
 
     const manager = new Exporter(urls);
     manager.on('export:begin', () => {
-      phase.value = '导出中';
+      phase.value = t('toast.phaseExporting');
       completed_count.value = 0;
       total_count.value = 0;
     });
@@ -66,15 +87,14 @@ export default () => {
       completed_count.value = num;
     });
     manager.on('export:finish', (seconds: number) => {
-      console.debug('耗时:', formatElapsedTime(seconds));
-      toast.success('Json 导出完成', `本次导出耗时 ${formatElapsedTime(seconds)}`);
+      notifyExportDone('JSON', seconds);
     });
 
     try {
       loading.value = true;
       await manager.startExport('json');
     } catch (error) {
-      console.error('导出任务失败:', error);
+      console.error(t('toast.taskFailed'), error);
       alert((error as Error).message);
     } finally {
       loading.value = false;
@@ -84,18 +104,18 @@ export default () => {
   // 导出 html
   async function export2html(urls: string[]) {
     if (urls.length === 0) {
-      toast.warning('提示', '请先选择文章');
+      warnNoSelection();
       return;
     }
 
     const manager = new Exporter(urls);
     manager.on('export:begin', () => {
-      phase.value = '资源解析中';
+      phase.value = t('toast.phaseParsingResources');
       completed_count.value = 0;
       total_count.value = 0;
     });
     manager.on('export:download', (total: number) => {
-      phase.value = '资源下载中';
+      phase.value = t('toast.phaseDownloadingResources');
       completed_count.value = 0;
       total_count.value = total;
     });
@@ -103,7 +123,7 @@ export default () => {
       completed_count.value = status.completed.length;
     });
     manager.on('export:write', (total: number) => {
-      phase.value = '文件写入中';
+      phase.value = t('toast.phaseWritingFiles');
       completed_count.value = 0;
       total_count.value = total;
     });
@@ -111,15 +131,14 @@ export default () => {
       completed_count.value = index;
     });
     manager.on('export:finish', (seconds: number) => {
-      console.debug('耗时:', formatElapsedTime(seconds));
-      toast.success('HTML 导出完成', `本次导出耗时 ${formatElapsedTime(seconds)}`);
+      notifyExportDone('HTML', seconds);
     });
 
     try {
       loading.value = true;
       await manager.startExport('html');
     } catch (error) {
-      console.error('导出任务失败:', error);
+      console.error(t('toast.taskFailed'), error);
       alert((error as Error).message);
     } finally {
       loading.value = false;
@@ -129,18 +148,18 @@ export default () => {
   // 导出 txt
   async function export2txt(urls: string[]) {
     if (urls.length === 0) {
-      toast.warning('提示', '请先选择文章');
+      warnNoSelection();
       return;
     }
 
     const manager = new Exporter(urls);
     manager.on('export:begin', () => {
-      phase.value = '资源解析中';
+      phase.value = t('toast.phaseParsingResources');
       completed_count.value = 0;
       total_count.value = 0;
     });
     manager.on('export:total', (total: number) => {
-      phase.value = '导出中';
+      phase.value = t('toast.phaseExporting');
       completed_count.value = 0;
       total_count.value = total;
     });
@@ -148,15 +167,14 @@ export default () => {
       completed_count.value = index;
     });
     manager.on('export:finish', (seconds: number) => {
-      console.debug('耗时:', formatElapsedTime(seconds));
-      toast.success('Txt 导出完成', `本次导出耗时 ${formatElapsedTime(seconds)}`);
+      notifyExportDone('Txt', seconds);
     });
 
     try {
       loading.value = true;
       await manager.startExport('txt');
     } catch (error) {
-      console.error('导出任务失败:', error);
+      console.error(t('toast.taskFailed'), error);
       alert((error as Error).message);
     } finally {
       loading.value = false;
@@ -166,18 +184,18 @@ export default () => {
   // 导出 markdown
   async function export2markdown(urls: string[]) {
     if (urls.length === 0) {
-      toast.success('提示', '请先选择文章');
+      warnNoSelection();
       return;
     }
 
     const manager = new Exporter(urls);
     manager.on('export:begin', () => {
-      phase.value = '资源解析中';
+      phase.value = t('toast.phaseParsingResources');
       completed_count.value = 0;
       total_count.value = 0;
     });
     manager.on('export:total', (total: number) => {
-      phase.value = '导出中';
+      phase.value = t('toast.phaseExporting');
       completed_count.value = 0;
       total_count.value = total;
     });
@@ -185,15 +203,14 @@ export default () => {
       completed_count.value = index;
     });
     manager.on('export:finish', (seconds: number) => {
-      console.debug('耗时:', formatElapsedTime(seconds));
-      toast.success('Markdown 导出完成', `本次导出耗时 ${formatElapsedTime(seconds)}`);
+      notifyExportDone('Markdown', seconds);
     });
 
     try {
       loading.value = true;
       await manager.startExport('markdown');
     } catch (error) {
-      console.error('导出任务失败:', error);
+      console.error(t('toast.taskFailed'), error);
       alert((error as Error).message);
     } finally {
       loading.value = false;
@@ -203,18 +220,18 @@ export default () => {
   // 导出 word
   async function export2word(urls: string[]) {
     if (urls.length === 0) {
-      toast.warning('提示', '请先选择文章');
+      warnNoSelection();
       return;
     }
 
     const manager = new Exporter(urls);
     manager.on('export:begin', () => {
-      phase.value = '资源解析中';
+      phase.value = t('toast.phaseParsingResources');
       completed_count.value = 0;
       total_count.value = 0;
     });
     manager.on('export:total', (total: number) => {
-      phase.value = '导出中';
+      phase.value = t('toast.phaseExporting');
       completed_count.value = 0;
       total_count.value = total;
     });
@@ -222,15 +239,14 @@ export default () => {
       completed_count.value = index;
     });
     manager.on('export:finish', (seconds: number) => {
-      console.debug('耗时:', formatElapsedTime(seconds));
-      toast.success('Word 导出完成', `本次导出耗时 ${formatElapsedTime(seconds)}`);
+      notifyExportDone('Word', seconds);
     });
 
     try {
       loading.value = true;
       await manager.startExport('word');
     } catch (error) {
-      console.error('导出任务失败:', error);
+      console.error(t('toast.taskFailed'), error);
       alert((error as Error).message);
     } finally {
       loading.value = false;
@@ -240,18 +256,18 @@ export default () => {
   // 导出 pdf（与 HTML 导出类似，需先下载资源再生成 PDF）
   async function export2pdf(urls: string[]) {
     if (urls.length === 0) {
-      toast.warning('提示', '请先选择文章');
+      warnNoSelection();
       return;
     }
 
     const manager = new Exporter(urls);
     manager.on('export:begin', () => {
-      phase.value = '资源解析中';
+      phase.value = t('toast.phaseParsingResources');
       completed_count.value = 0;
       total_count.value = 0;
     });
     manager.on('export:download', (total: number) => {
-      phase.value = '资源下载中';
+      phase.value = t('toast.phaseDownloadingResources');
       completed_count.value = 0;
       total_count.value = total;
     });
@@ -259,7 +275,7 @@ export default () => {
       completed_count.value = status.completed.length;
     });
     manager.on('export:write', (total: number) => {
-      phase.value = 'PDF 生成中';
+      phase.value = t('toast.phaseGeneratingPdf');
       completed_count.value = 0;
       total_count.value = total;
     });
@@ -267,15 +283,14 @@ export default () => {
       completed_count.value = index;
     });
     manager.on('export:finish', (seconds: number) => {
-      console.debug('耗时:', formatElapsedTime(seconds));
-      toast.success('PDF 导出完成', `本次导出耗时 ${formatElapsedTime(seconds)}`);
+      notifyExportDone('PDF', seconds);
     });
 
     try {
       loading.value = true;
       await manager.startExport('pdf');
     } catch (error) {
-      console.error('导出任务失败:', error);
+      console.error(t('toast.taskFailed'), error);
       alert((error as Error).message);
     } finally {
       loading.value = false;
@@ -287,10 +302,10 @@ export default () => {
   function exportFile(
     type: 'excel' | 'json' | 'html' | 'text' | 'markdown' | 'word' | 'pdf',
     urls: string[],
-    contentNotDownloadedCount?: number,
+    contentNotDownloadedCount?: number
   ) {
     if (needsContentFormats.has(type) && contentNotDownloadedCount) {
-      toast.warning('提示', `有 ${contentNotDownloadedCount} 篇文章尚未抓取内容，请先抓取内容后再导出`);
+      toast.warning(t('common.tip'), t('toast.contentNotDownloaded', { count: contentNotDownloadedCount }));
       return;
     }
 

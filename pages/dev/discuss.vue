@@ -1,6 +1,6 @@
 <template>
   <div style="max-width: 667px; margin: 0 auto; padding: 10px 10px 80px">
-    <p style="font-size: 15px; color: #949494">留言 {{ totalCount }}</p>
+    <p style="font-size: 15px; color: #949494">{{ t('dev.discuss.comments', { count: totalCount }) }}</p>
     <div style="margin-top: -10px">
       <div style="margin-top: 25px" v-for="comment in targetCommentData.elected_comment">
         <div style="display: flex">
@@ -102,7 +102,7 @@
           "
           v-if="comment.reply_new.reply_total_cnt - comment.reply_new.reply_list.length > 0"
         >
-          <span>{{ comment.reply_new.reply_total_cnt - comment.reply_new.reply_list.length }}条回复</span>
+          <span>{{ t('dev.discuss.replies', { count: comment.reply_new.reply_total_cnt - comment.reply_new.reply_list.length }) }}</span>
           <img
             src="https://wxa.wxs.qq.com/images/wxapp/feedback_icon.png"
             alt=""
@@ -116,6 +116,8 @@
 
 <script setup lang="ts">
 import { formatAlbumTime } from '~/utils/album';
+
+const { t } = useLocale();
 
 definePageMeta({
   layout: false,

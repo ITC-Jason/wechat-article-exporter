@@ -2,6 +2,7 @@
 import qqGroupImg from '~/assets/qq-group-3.png';
 
 const modal = useModal();
+const { t } = useLocale();
 
 function onClose() {
   modal.close();
@@ -12,7 +13,7 @@ function onClose() {
   <UModal prevent-close>
     <UCard>
       <template #header>
-        <h2 class="text-lg font-semibold">加入 QQ 群</h2>
+        <h2 class="text-lg font-semibold">{{ t('modal.qq.title') }}</h2>
         <UButton square variant="link" color="gray" class="absolute right-3 top-3" @click="onClose">
           <UIcon name="i-lucide:x" class="size-6" />
         </UButton>
@@ -21,7 +22,7 @@ function onClose() {
       <!-- 二维码图片展示区 -->
       <div class="flex flex-col justify-center items-center mx-auto">
         <img :src="qqGroupImg" alt="" class="size-72" />
-        <p class="text-2xl">群号: <span class="font-mono">814249342</span></p>
+        <p class="text-2xl">{{ t('modal.qq.groupNumber') }} <span class="font-mono">814249342</span></p>
       </div>
     </UCard>
   </UModal>

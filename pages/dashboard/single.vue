@@ -21,8 +21,7 @@ import GridLoading from '~/components/grid/Loading.vue';
 import GridNoRows from '~/components/grid/NoRows.vue';
 import PreviewArticle from '~/components/preview/Article.vue';
 import toastFactory from '~/composables/toast';
-import { websiteName } from '~/config';
-import { sharedGridOptions } from '~/config/shared-grid-options';
+import { getSharedGridOptions } from '~/config/shared-grid-options';
 import { articleDeleted, updateArticleFakeid, updateArticleStatus } from '~/store/v2/article';
 import { db } from '~/store/v2/db';
 import { getHtmlCache } from '~/store/v2/html';
@@ -32,8 +31,16 @@ import type { AppMsgExWithFakeID } from '~/types/types';
 import type { ArticleMetadata } from '~/utils/download/types';
 import { createBooleanColumnFilterParams, createDateColumnFilterParams } from '~/utils/grid';
 
+const { locale, t } = useLocale();
+
+function formatArticleStatus(status: string) {
+  if (status === '正常') return t('article.normal');
+  if (status === '已删除') return t('article.deleted');
+  return status;
+}
+
 useHead({
-  title: `单篇文章下载 | ${websiteName}`,
+  title: computed(() => `${t('single.title')} | ${t('site.name')}`),
 });
 
 interface SingleArticleRow extends Partial<ArticleMetadata> {
@@ -77,7 +84,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '标题',
+    headerName: t('grid.headers.title'),
     field: 'title',
     cellDataType: 'text',
     filter: 'agTextColumnFilter',
@@ -86,7 +93,7 @@ const columnDefs = ref<ColDef[]>([
     tooltipField: 'title',
   },
   {
-    headerName: '链接',
+    headerName: t('grid.headers.link'),
     field: 'link',
     cellDataType: 'text',
     filter: 'agTextColumnFilter',
@@ -95,19 +102,19 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'font-mono',
   },
   {
-    headerName: '文章状态',
+    headerName: t('grid.headers.articleStatus'),
     field: '_status',
-    valueFormatter: p => p.value,
+    valueFormatter: p => formatArticleStatus(p.value),
     filter: 'agSetColumnFilter',
     filterParams: {
-      valueFormatter: (p: ValueFormatterParams) => p.value,
+      valueFormatter: (p: ValueFormatterParams) => formatArticleStatus(p.value),
     },
     minWidth: 150,
     initialHide: true,
     cellClass: 'flex justify-center items-center',
   },
   {
-    headerName: '作者',
+    headerName: t('grid.headers.author'),
     field: 'author_name',
     cellDataType: 'text',
     filter: 'agSetColumnFilter',
@@ -116,7 +123,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center',
   },
   {
-    headerName: '发布时间',
+    headerName: t('grid.headers.publishTime'),
     field: 'update_time',
     valueFormatter: (params: ValueFormatterParams) => (params.value ? formatTimeStamp(params.value) : '--'),
     filter: 'agDateColumnFilter',
@@ -129,25 +136,25 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '内容已下载',
+    headerName: t('grid.headers.contentDownloaded'),
     field: 'contentDownload',
     cellDataType: 'boolean',
     filter: 'agSetColumnFilter',
-    filterParams: createBooleanColumnFilterParams('已下载', '未下载'),
+    filterParams: createBooleanColumnFilterParams(t('grid.filters.downloaded'), t('grid.filters.notDownloaded')),
     minWidth: 140,
     cellClass: 'flex justify-center items-center',
   },
   {
     field: 'commentDownload',
-    headerName: '留言已下载',
+    headerName: t('grid.headers.commentDownloaded'),
     cellDataType: 'boolean',
     filter: 'agSetColumnFilter',
-    filterParams: createBooleanColumnFilterParams('已下载', '未下载'),
+    filterParams: createBooleanColumnFilterParams(t('grid.filters.downloaded'), t('grid.filters.notDownloaded')),
     minWidth: 150,
     cellClass: 'flex justify-center items-center',
   },
   {
-    headerName: '阅读',
+    headerName: t('grid.headers.read'),
     field: 'readNum',
     cellDataType: 'number',
     filter: 'agNumberColumnFilter',
@@ -155,7 +162,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '点赞',
+    headerName: t('grid.headers.oldLike'),
     field: 'oldLikeNum',
     cellDataType: 'number',
     filter: 'agNumberColumnFilter',
@@ -163,7 +170,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '分享',
+    headerName: t('grid.headers.share'),
     field: 'shareNum',
     cellDataType: 'number',
     filter: 'agNumberColumnFilter',
@@ -171,7 +178,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '喜欢',
+    headerName: t('grid.headers.like'),
     field: 'likeNum',
     cellDataType: 'number',
     filter: 'agNumberColumnFilter',
@@ -179,7 +186,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '留言',
+    headerName: t('grid.headers.comment'),
     field: 'commentNum',
     cellDataType: 'number',
     filter: 'agNumberColumnFilter',
@@ -187,7 +194,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '操作',
+    headerName: t('grid.headers.action'),
     colId: 'single-action',
     field: 'link',
     sortable: false,
@@ -220,7 +227,7 @@ const gridOptions: GridOptions = defu(
     overlayLoadingTemplate: '<grid-loading />',
     overlayNoRowsTemplate: '<grid-no-rows />',
   },
-  sharedGridOptions
+  getSharedGridOptions(t, locale.value)
 );
 
 const gridApi = shallowRef<GridApi | null>(null);
@@ -254,12 +261,12 @@ onMounted(() => {
 
 function normalizeUrl(url: string) {
   const trimmed = url.trim();
-  if (!trimmed) throw new Error('链接不能为空');
+  if (!trimmed) throw new Error(t('single.emptyLink'));
   const hasProtocol = /^https?:\/\//i.test(trimmed);
   const normalized = hasProtocol ? trimmed : `https://${trimmed}`;
   const parsed = new URL(normalized);
   if (parsed.hostname !== 'mp.weixin.qq.com') {
-    throw new Error('请输入有效的公众号文章链接!');
+    throw new Error(t('single.invalidLink'));
   }
   return parsed.toString();
 }
@@ -285,7 +292,7 @@ function createRow(url: string): SingleArticleRow {
     id: generatedId,
     fakeid,
     link: url,
-    title: '未命名文章',
+    title: t('single.untitled'),
     author_name: '--',
     digest: '',
     create_time: timestamp,
@@ -305,7 +312,7 @@ async function addArticle() {
   try {
     const normalized = normalizeUrl(inputUrl.value);
     if (globalRowData.value.some(row => row.link === normalized)) {
-      toast.info('提示', '该链接已存在列表中');
+      toast.info(t('common.tip'), t('single.exists'));
       return;
     }
     const row = createRow(normalized);
@@ -315,7 +322,7 @@ async function addArticle() {
     inputUrl.value = '';
     await downloadRows([row], { silent: true });
   } catch (error: any) {
-    toast.error('添加失败', error?.message || '链接格式不正确');
+    toast.error(t('single.addFailed'), error?.message || t('single.badLink'));
   }
 }
 
@@ -475,7 +482,7 @@ async function downloadRows(targetRows: SingleArticleRow[], options: { silent?: 
   const { silent = false } = options;
   if (targetRows.length === 0) {
     if (!silent) {
-      toast.info('提示', '请先选择至少一篇文章');
+      toast.info(t('common.tip'), t('single.selectOne'));
     }
     return;
   }
@@ -541,7 +548,7 @@ async function updateRowFromHtml(row: SingleArticleRow) {
 
 function previewRow(row: SingleArticleRow) {
   if (!row.contentDownload) {
-    toast.warning('提示', '请先抓取该文章内容');
+    toast.warning(t('common.tip'), t('single.fetchBeforePreview'));
     return;
   }
   const article = buildVirtualArticle(row) as AppMsgExWithFakeID;
@@ -567,7 +574,7 @@ async function deleteRowData(row: SingleArticleRow) {
 async function removeRows() {
   const selectedRows = getSelectedRows();
   if (selectedRows.length === 0) {
-    toast.info('提示', '请选择要移除的文章');
+    toast.info(t('common.tip'), t('single.selectRemove'));
     return;
   }
   try {
@@ -575,9 +582,9 @@ async function removeRows() {
     globalRowData.value = globalRowData.value.filter(row => !selectedRows.some(sel => sel.id === row.id));
     gridApi.value?.deselectAll();
     refreshGrid();
-    toast.success('移除成功', `已移除 ${selectedRows.length} 篇文章`);
+    toast.success(t('single.removeSuccess'), t('single.removeSuccessDescription', { count: selectedRows.length }));
   } catch (error: any) {
-    toast.error('移除失败', error?.message || '删除本地缓存时出错');
+    toast.error(t('single.removeFailed'), error?.message || t('single.removeCacheError'));
   }
 }
 </script>
@@ -585,23 +592,23 @@ async function removeRows() {
 <template>
   <div class="h-full">
     <Teleport defer to="#title">
-      <h1 class="text-[28px] leading-[34px] text-slate-12 dark:text-slate-50 font-bold">单篇文章下载</h1>
+      <h1 class="text-[28px] leading-[34px] text-slate-12 dark:text-slate-50 font-bold">{{ t('single.title') }}</h1>
     </Teleport>
 
     <div class="flex flex-col h-full divide-y divide-gray-200">
       <!-- 顶部操作区 -->
       <header class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between px-3 py-3">
         <div class="flex flex-1 gap-3">
-          <UInput v-model="inputUrl" placeholder="请输入公众号文章链接" class="flex-1" @keyup.enter="addArticle" />
-          <UButton color="blue" @click="addArticle">添加</UButton>
+          <UInput v-model="inputUrl" :placeholder="t('single.inputPlaceholder')" class="flex-1" @keyup.enter="addArticle" />
+          <UButton color="blue" @click="addArticle">{{ t('common.add') }}</UButton>
         </div>
         <div class="flex items-center gap-3">
           <ButtonGroup
             :items="[
-              { label: '修复fakeid', event: 'fix-fakeid' },
-              { label: '文章内容', event: 'download-article-html' },
-              { label: '阅读量 (需要Credential)', event: 'download-article-metadata' },
-              { label: '留言内容 (需要Credential)', event: 'download-article-comment' },
+              { label: t('article.fixFakeid'), event: 'fix-fakeid' },
+              { label: t('article.downloadContent'), event: 'download-article-html' },
+              { label: t('article.downloadMetadata'), event: 'download-article-metadata' },
+              { label: t('article.downloadComment'), event: 'download-article-comment' },
             ]"
             @fix-fakeid="download('fakeid', selectedArticleUrls)"
             @download-article-html="download('html', selectedArticleUrls)"
@@ -613,7 +620,11 @@ async function removeRows() {
               :disabled="selectedArticleUrls.length === 0"
               color="white"
               class="font-mono"
-              :label="downloadBtnLoading ? `抓取中 ${downloadCompletedCount}/${downloadTotalCount}` : '抓取'"
+              :label="
+                downloadBtnLoading
+                  ? t('article.downloading', { completed: downloadCompletedCount, total: downloadTotalCount })
+                  : t('common.download')
+              "
               trailing-icon="i-heroicons-chevron-down-20-solid"
             />
           </ButtonGroup>
@@ -625,8 +636,8 @@ async function removeRows() {
               { label: 'HTML', event: 'export-article-html' },
               { label: 'Txt', event: 'export-article-text' },
               { label: 'Markdown', event: 'export-article-markdown' },
-              { label: 'Word (内测中)', event: 'export-article-word' },
-              { label: 'PDF (内测中)', event: 'export-article-pdf' },
+              { label: t('article.wordBeta'), event: 'export-article-word' },
+              { label: t('article.pdfBeta'), event: 'export-article-pdf' },
             ]"
             @export-article-excel="exportFile('excel', selectedArticleUrls)"
             @export-article-json="exportFile('json', selectedArticleUrls)"
@@ -641,13 +652,21 @@ async function removeRows() {
               :disabled="selectedArticleUrls.length === 0"
               color="white"
               class="font-mono"
-              :label="exportBtnLoading ? `${exportPhase} ${exportCompletedCount}/${exportTotalCount}` : '导出'"
+              :label="
+                exportBtnLoading
+                  ? t('article.exporting', {
+                      phase: exportPhase,
+                      completed: exportCompletedCount,
+                      total: exportTotalCount,
+                    })
+                  : t('common.export')
+              "
               trailing-icon="i-heroicons-chevron-down-20-solid"
             />
           </ButtonGroup>
 
           <UButton color="rose" variant="soft" :disabled="selectedArticleUrls.length === 0" @click="removeRows">
-            移除
+            {{ t('common.remove') }}
           </UButton>
         </div>
       </header>

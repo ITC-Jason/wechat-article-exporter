@@ -19,10 +19,10 @@
               <div class="flex justify-between">
                 <p class="font-semibold">{{ account.nickname }}</p>
                 <p class="text-sky-500 font-medium">
-                  {{ ACCOUNT_TYPE[account.service_type] }}
+                  {{ formatAccountType(account.service_type) }}
                 </p>
               </div>
-              <p class="text-gray-500 text-sm">微信号: {{ account.alias || '未设置' }}</p>
+              <p class="text-gray-500 text-sm">{{ t('account.wechatId', { id: account.alias || t('account.notSet') }) }}</p>
               <p class="text-sm mt-2">{{ account.signature }}</p>
             </div>
           </li>
@@ -31,14 +31,14 @@
         <p v-if="loading" class="flex justify-center items-center my-2 py-2">
           <Loader :size="28" class="animate-spin text-slate-500" />
         </p>
-        <p v-else-if="noMoreData" class="text-center mt-2 py-2 text-slate-400">已全部加载完毕</p>
+        <p v-else-if="noMoreData" class="text-center mt-2 py-2 text-slate-400">{{ t('common.noMoreData') }}</p>
         <button
           v-else-if="accountList.length > 0"
           @click="loadData"
           class="block mx-auto my-2 h-10 px-6 font-semibold rounded-md border border-slate-200 text-slate-900 dark:text-slate-300 hover:border-slate-400"
           type="button"
         >
-          加载更多
+          {{ t('common.loadingMore') }}
         </button>
       </div>
     </div>
@@ -49,11 +49,16 @@
 import { Loader } from 'lucide-vue-next';
 import { getAccountList } from '~/apis';
 import LoginModal from '~/components/modal/Login.vue';
-import { ACCOUNT_LIST_PAGE_SIZE, ACCOUNT_TYPE } from '~/config';
+import { ACCOUNT_LIST_PAGE_SIZE } from '~/config';
 import type { AccountInfo } from '~/types/types';
 
 const toast = useToast();
 const modal = useModal();
+const { t } = useLocale();
+function formatAccountType(type: number) {
+  if (type === 2) return t('accountType.service');
+  return t('accountType.subscription');
+}
 
 const isOpen = ref(false);
 
@@ -97,7 +102,7 @@ async function loadData() {
       console.error(e);
       toast.add({
         color: 'rose',
-        title: '错误',
+        title: t('common.error'),
         description: e.message,
         icon: 'i-octicon:bell-24',
       });

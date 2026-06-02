@@ -11,10 +11,12 @@
 </template>
 
 <script setup lang="ts">
-import { websiteName } from '~/config';
-import { apis } from '~/config/public-apis';
+import { getApis } from '~/config/public-apis';
+
+const { t } = useLocale();
+const apis = computed(() => getApis(t));
 
 useHead({
-  title: `API | ${websiteName}`,
+  title: computed(() => `API | ${t('site.name')}`),
 });
 </script>

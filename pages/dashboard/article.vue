@@ -21,8 +21,8 @@ import GridArticleActions from '~/components/grid/ArticleActions.vue';
 import GridCoverTooltip from '~/components/grid/CoverTooltip.vue';
 import GridStatusBar from '~/components/grid/StatusBar.vue';
 import AccountSelectorForArticle from '~/components/selector/AccountSelectorForArticle.vue';
-import { isDev, websiteName } from '~/config';
-import { sharedGridOptions } from '~/config/shared-grid-options';
+import { isDev } from '~/config';
+import { getSharedGridOptions } from '~/config/shared-grid-options';
 import { articleDeleted, getArticleCache, updateArticleStatus } from '~/store/v2/article';
 import { getCommentCache } from '~/store/v2/comment';
 import { getDebugCache } from '~/store/v2/debug';
@@ -34,8 +34,16 @@ import type { AppMsgExWithFakeID } from '~/types/types';
 import type { ArticleMetadata } from '~/utils/download/types';
 import { createBooleanColumnFilterParams, createDateColumnFilterParams } from '~/utils/grid';
 
+const { locale, t } = useLocale();
+
+function formatArticleStatus(status: string) {
+  if (status === '正常') return t('article.normal');
+  if (status === '已删除') return t('article.deleted');
+  return status;
+}
+
 useHead({
-  title: `文章下载 | ${websiteName}`,
+  title: computed(() => `${t('article.title')} | ${t('site.name')}`),
 });
 
 // 当前页面的数据模型
@@ -64,7 +72,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '链接',
+    headerName: t('grid.headers.link'),
     field: 'link',
     cellDataType: 'text',
     filter: 'agTextColumnFilter',
@@ -73,7 +81,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'font-mono',
   },
   {
-    headerName: '标题',
+    headerName: t('grid.headers.title'),
     field: 'title',
     cellDataType: 'text',
     filter: 'agTextColumnFilter',
@@ -81,7 +89,7 @@ const columnDefs = ref<ColDef[]>([
     minWidth: 200,
   },
   {
-    headerName: '封面',
+    headerName: t('grid.headers.cover'),
     field: 'cover',
     sortable: false,
     filter: false,
@@ -95,7 +103,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center',
   },
   {
-    headerName: '摘要',
+    headerName: t('grid.headers.digest'),
     field: 'digest',
     cellDataType: 'text',
     filter: 'agTextColumnFilter',
@@ -104,7 +112,7 @@ const columnDefs = ref<ColDef[]>([
     initialHide: true,
   },
   {
-    headerName: '创建时间',
+    headerName: t('grid.headers.createTime'),
     field: 'create_time',
     valueFormatter: p => formatTimeStamp(p.value),
     filter: 'agDateColumnFilter',
@@ -117,7 +125,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '发布时间',
+    headerName: t('grid.headers.publishTime'),
     field: 'update_time',
     valueFormatter: p => formatTimeStamp(p.value),
     filter: 'agDateColumnFilter',
@@ -129,47 +137,47 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '是否已删除',
+    headerName: t('grid.headers.isDeleted'),
     field: 'is_deleted',
     cellDataType: 'boolean',
     filter: 'agSetColumnFilter',
-    filterParams: createBooleanColumnFilterParams('已删除', '未删除'),
+    filterParams: createBooleanColumnFilterParams(t('grid.filters.deleted'), t('grid.filters.notDeleted')),
     minWidth: 150,
     initialHide: true,
     cellClass: 'flex justify-center items-center',
   },
   {
-    headerName: '文章状态',
+    headerName: t('grid.headers.articleStatus'),
     field: '_status',
-    valueFormatter: p => p.value,
+    valueFormatter: p => formatArticleStatus(p.value),
     filter: 'agSetColumnFilter',
     filterParams: {
-      valueFormatter: (p: ValueFormatterParams) => p.value,
+      valueFormatter: (p: ValueFormatterParams) => formatArticleStatus(p.value),
     },
     minWidth: 150,
     initialHide: true,
     cellClass: 'flex justify-center items-center',
   },
   {
-    headerName: '内容已下载',
+    headerName: t('grid.headers.contentDownloaded'),
     field: 'contentDownload',
     cellDataType: 'boolean',
     filter: 'agSetColumnFilter',
-    filterParams: createBooleanColumnFilterParams('已下载', '未下载'),
+    filterParams: createBooleanColumnFilterParams(t('grid.filters.downloaded'), t('grid.filters.notDownloaded')),
     minWidth: 150,
     cellClass: 'flex justify-center items-center',
   },
   {
     field: 'commentDownload',
-    headerName: '留言已下载',
+    headerName: t('grid.headers.commentDownloaded'),
     cellDataType: 'boolean',
     filter: 'agSetColumnFilter',
-    filterParams: createBooleanColumnFilterParams('已下载', '未下载'),
+    filterParams: createBooleanColumnFilterParams(t('grid.filters.downloaded'), t('grid.filters.notDownloaded')),
     minWidth: 150,
     cellClass: 'flex justify-center items-center',
   },
   {
-    headerName: '阅读',
+    headerName: t('grid.headers.read'),
     field: 'readNum',
     cellDataType: 'number',
     filter: 'agNumberColumnFilter',
@@ -177,7 +185,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '点赞',
+    headerName: t('grid.headers.oldLike'),
     field: 'oldLikeNum',
     cellDataType: 'number',
     filter: 'agNumberColumnFilter',
@@ -185,7 +193,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '分享',
+    headerName: t('grid.headers.share'),
     field: 'shareNum',
     cellDataType: 'number',
     filter: 'agNumberColumnFilter',
@@ -193,7 +201,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '喜欢',
+    headerName: t('grid.headers.like'),
     field: 'likeNum',
     cellDataType: 'number',
     filter: 'agNumberColumnFilter',
@@ -201,7 +209,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '留言',
+    headerName: t('grid.headers.comment'),
     field: 'commentNum',
     cellDataType: 'number',
     filter: 'agNumberColumnFilter',
@@ -210,36 +218,36 @@ const columnDefs = ref<ColDef[]>([
   },
   {
     field: 'author_name',
-    headerName: '作者',
+    headerName: t('grid.headers.author'),
     cellDataType: 'text',
     filter: 'agSetColumnFilter',
     minWidth: 150,
     cellClass: 'flex justify-center items-center',
   },
   {
-    headerName: '是否原创',
+    headerName: t('grid.headers.isOriginal'),
     valueGetter: p => p.data && p.data.copyright_stat === 1 && p.data.copyright_type === 1,
     cellDataType: 'boolean',
     filter: 'agSetColumnFilter',
-    filterParams: createBooleanColumnFilterParams('原创', '非原创'),
+    filterParams: createBooleanColumnFilterParams(t('grid.filters.original'), t('grid.filters.notOriginal')),
     minWidth: 150,
     cellClass: 'flex justify-center items-center',
   },
   {
-    headerName: '是否付费',
+    headerName: t('grid.headers.isPaid'),
     field: 'is_pay_subscribe',
     valueGetter: p => p.data && p.data.is_pay_subscribe === 1,
     cellDataType: 'boolean',
     filter: 'agSetColumnFilter',
-    filterParams: createBooleanColumnFilterParams('付费', '免费'),
+    filterParams: createBooleanColumnFilterParams(t('grid.filters.paid'), t('grid.filters.free')),
     minWidth: 150,
     initialHide: true,
     cellClass: 'flex justify-center items-center',
   },
   {
-    headerName: '付费金额',
+    headerName: t('grid.headers.paidAmount'),
     field: 'wecoin_count',
-    valueFormatter: p => (p.value ? `${p.value} 微币` : ''),
+    valueFormatter: p => (p.value ? t('article.wecoin', { count: p.value }) : ''),
     cellDataType: 'number',
     filter: 'agNumberColumnFilter',
     minWidth: 120,
@@ -247,19 +255,19 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '文章类型',
+    headerName: t('grid.headers.articleType'),
     field: 'item_show_type',
-    valueFormatter: p => formatItemShowType(p.value),
+    valueFormatter: p => formatItemShowType(p.value, t),
     filter: 'agSetColumnFilter',
     filterParams: {
-      valueFormatter: (p: ValueFormatterParams) => formatItemShowType(p.value),
+      valueFormatter: (p: ValueFormatterParams) => formatItemShowType(p.value, t),
     },
     minWidth: 150,
     initialHide: true,
     cellClass: 'flex justify-center items-center',
   },
   {
-    headerName: '媒体时长',
+    headerName: t('grid.headers.mediaDuration'),
     field: 'media_duration',
     valueGetter: params => durationToSeconds(params.data.media_duration), // 用于排序和过滤
     valueFormatter: params => params.data.media_duration,
@@ -270,7 +278,7 @@ const columnDefs = ref<ColDef[]>([
     cellClass: 'flex justify-center items-center font-mono',
   },
   {
-    headerName: '所属合集',
+    headerName: t('grid.headers.album'),
     field: 'appmsg_album_infos',
     cellRenderer: GridAlbum,
     sortable: false,
@@ -280,7 +288,7 @@ const columnDefs = ref<ColDef[]>([
     initialHide: true,
   },
   {
-    headerName: '操作',
+    headerName: t('grid.headers.action'),
     field: 'link',
     sortable: false,
     filter: false,
@@ -312,7 +320,7 @@ const gridOptions: GridOptions = defu(
       ],
     },
   },
-  sharedGridOptions
+  getSharedGridOptions(t, locale.value)
 );
 
 const gridApi = shallowRef<GridApi | null>(null);
@@ -525,7 +533,7 @@ function copyWechatLink() {
 <template>
   <div class="h-full">
     <Teleport defer to="#title">
-      <h1 class="text-[28px] leading-[34px] text-slate-12 dark:text-slate-50 font-bold">文章下载</h1>
+      <h1 class="text-[28px] leading-[34px] text-slate-12 dark:text-slate-50 font-bold">{{ t('article.title') }}</h1>
     </Teleport>
 
     <div class="flex flex-col h-full divide-y divide-gray-200">
@@ -537,12 +545,12 @@ function copyWechatLink() {
           </div>
         </div>
         <div class="flex items-center space-x-2">
-          <UButton v-if="downloadBtnLoading" color="black" @click="stopDownload">停止</UButton>
+          <UButton v-if="downloadBtnLoading" color="black" @click="stopDownload">{{ t('common.stop') }}</UButton>
           <ButtonGroup
             :items="[
-              { label: '文章内容', event: 'download-article-html' },
-              { label: '阅读量 (需要Credential)', event: 'download-article-metadata' },
-              { label: '留言内容 (需要Credential)', event: 'download-article-comment' },
+              { label: t('article.downloadContent'), event: 'download-article-html' },
+              { label: t('article.downloadMetadata'), event: 'download-article-metadata' },
+              { label: t('article.downloadComment'), event: 'download-article-comment' },
             ]"
             @download-article-html="download('html', selectedArticleUrls)"
             @download-article-metadata="download('metadata', selectedArticleUrls)"
@@ -553,7 +561,11 @@ function copyWechatLink() {
               :disabled="!selectedAccount"
               color="white"
               class="font-mono"
-              :label="downloadBtnLoading ? `抓取中 ${downloadCompletedCount}/${downloadTotalCount}` : '抓取'"
+              :label="
+                downloadBtnLoading
+                  ? t('article.downloading', { completed: downloadCompletedCount, total: downloadTotalCount })
+                  : t('common.download')
+              "
               trailing-icon="i-heroicons-chevron-down-20-solid"
             />
           </ButtonGroup>
@@ -565,8 +577,8 @@ function copyWechatLink() {
               { label: 'HTML', event: 'export-article-html' },
               { label: 'Txt', event: 'export-article-text' },
               { label: 'Markdown', event: 'export-article-markdown' },
-              { label: 'Word (内测中)', event: 'export-article-word' },
-              { label: 'PDF (内测中)', event: 'export-article-pdf' },
+              { label: t('article.wordBeta'), event: 'export-article-word' },
+              { label: t('article.pdfBeta'), event: 'export-article-pdf' },
             ]"
             @export-article-excel="exportFile('excel', selectedArticleUrls)"
             @export-article-json="exportFile('json', selectedArticleUrls)"
@@ -581,7 +593,15 @@ function copyWechatLink() {
               :disabled="!selectedAccount"
               color="white"
               class="font-mono"
-              :label="exportBtnLoading ? `${exportPhase} ${exportCompletedCount}/${exportTotalCount}` : '导出'"
+              :label="
+                exportBtnLoading
+                  ? t('article.exporting', {
+                      phase: exportPhase,
+                      completed: exportCompletedCount,
+                      total: exportTotalCount,
+                    })
+                  : t('common.export')
+              "
               trailing-icon="i-heroicons-chevron-down-20-solid"
             />
           </ButtonGroup>
@@ -589,11 +609,11 @@ function copyWechatLink() {
           <UButton
             :disabled="!selectedAccount"
             :icon="copied ? 'i-lucide:check' : 'i-heroicons-link-16-solid'"
-            label="复制公众号链接"
+            :label="t('article.copyAccountLink')"
             :color="copied ? 'green' : 'blue'"
             @click="copyWechatLink"
           />
-          <UButton v-if="isDev" @click="debug">调试</UButton>
+          <UButton v-if="isDev" @click="debug">{{ t('common.debug') }}</UButton>
         </div>
       </header>
 

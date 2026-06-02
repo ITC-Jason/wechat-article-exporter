@@ -3,6 +3,7 @@ import { request } from '#shared/utils/request';
 import type { LoginAccount, ScanLoginResult, StartLoginResult } from '~/types/types';
 
 const modal = useModal();
+const { t } = useLocale();
 
 const qrcodeSrc = ref('');
 const loading = ref(false);
@@ -32,7 +33,7 @@ async function newLoginSession() {
   const sid = new Date().getTime().toString() + Math.floor(Math.random() * 100);
   const resp = await request<StartLoginResult>(`/api/web/login/session/${sid}`, { method: 'POST' });
   if (!resp || !resp.base_resp || resp.base_resp.ret !== 0) {
-    throw new Error(`${resp?.base_resp?.err_msg || '获取登录会话失败'}`);
+    throw new Error(`${resp?.base_resp?.err_msg || t('modal.login.getSessionFailed')}`);
   }
 }
 
@@ -40,7 +41,7 @@ async function newLoginSession() {
 async function getQrcode() {
   try {
     loading.value = true;
-    msg.value = '获取登录二维码';
+    msg.value = t('modal.login.getQRCode');
     await newLoginSession();
     qrcodeSrc.value = `/api/web/login/getqrcode?rnd=${Math.random()}`;
     msg.value = '';
@@ -73,7 +74,7 @@ async function checkQrcodeStatus() {
         break;
       case 1:
         // 登录成功
-        msg.value = '已确认，正在登录中';
+        msg.value = t('modal.login.confirmed');
         await bizLogin();
         break;
       case 2:
@@ -86,16 +87,16 @@ async function checkQrcodeStatus() {
       case 6:
         if (resp.acct_size >= 1) {
           loading.value = true;
-          msg.value = '扫码成功，等待确认';
+          msg.value = t('modal.login.scanned');
           qrcodeSrc.value = '';
         } else {
-          msg.value = '没有可登录账号';
+          msg.value = t('modal.login.noAccount');
         }
         _check();
         break;
       case 5:
         // 未绑定邮箱，不能扫描登录
-        msg.value = '该账号尚未绑定邮箱';
+        msg.value = t('modal.login.emailRequired');
         _check();
         break;
     }
@@ -112,7 +113,7 @@ async function bizLogin() {
       throw new Error(`${resp.err}`);
     }
 
-    msg.value = '登录成功';
+    msg.value = t('modal.login.success');
     loginAccount.value = resp;
 
     closeModal();
@@ -128,7 +129,7 @@ async function bizLogin() {
   <UModal prevent-close>
     <UCard>
       <template #header>
-        <h2 class="text-lg font-semibold">登录微信公众号</h2>
+        <h2 class="text-lg font-semibold">{{ t('modal.login.title') }}</h2>
         <UButton
           square
           variant="link"

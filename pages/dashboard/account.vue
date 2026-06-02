@@ -20,8 +20,8 @@ import ConfirmModal from '~/components/modal/Confirm.vue';
 import LoginModal from '~/components/modal/Login.vue';
 import toastFactory from '~/composables/toast';
 import useLoginCheck from '~/composables/useLoginCheck';
-import { IMAGE_PROXY, websiteName } from '~/config';
-import { sharedGridOptions } from '~/config/shared-grid-options';
+import { IMAGE_PROXY } from '~/config';
+import { getSharedGridOptions } from '~/config/shared-grid-options';
 import { deleteAccountData } from '~/store/v2';
 import { getArticleCache, hitCache } from '~/store/v2/article';
 import { getAllInfo, getInfoCache, importMpAccounts, type MpAccount } from '~/store/v2/info';
@@ -30,8 +30,10 @@ import type { Preferences } from '~/types/preferences';
 import { exportAccountJsonFile } from '~/utils/exporter';
 import { createBooleanColumnFilterParams, createDateColumnFilterParams } from '~/utils/grid';
 
+const { locale, t } = useLocale();
+
 useHead({
-  title: `公众号管理 | ${websiteName}`,
+  title: computed(() => `${t('account.title')} | ${t('site.name')}`),
 });
 
 interface PromiseInstance {
@@ -69,7 +71,7 @@ async function onSelectAccount(account: MpAccount) {
   await loadAccountArticle(account, false);
   await refresh();
   addBtnLoading.value = false;
-  toast.success('公众号添加成功', `已成功添加公众号【${account.nickname}】，并同步了第一页的文章数据`);
+  toast.success(t('account.addSuccess'), t('account.addSuccessDescription', { name: account.nickname }));
   // 通知 Credentials 面板按钮立即变更为“已添加”
   accountEventBus.emit('account-added', { fakeid: account.fakeid });
 }
@@ -87,7 +89,7 @@ const syncTimer = ref<number | null>(null);
 async function _load(account: MpAccount, begin: number, loadMore: boolean, promise: PromiseInstance) {
   if (isCanceled.value) {
     isCanceled.value = false; // 这里需要将状态复位
-    promise.reject(new Error('已取消同步'));
+    promise.reject(new Error(t('account.cancelled')));
     return;
   }
 
@@ -97,7 +99,7 @@ async function _load(account: MpAccount, begin: number, loadMore: boolean, promi
   const [articles, completed] = await getArticleList(account, begin);
   if (isCanceled.value) {
     isCanceled.value = false;
-    promise.reject(new Error('已取消同步'));
+    promise.reject(new Error(t('account.cancelled')));
     return;
   }
   if (completed) {
@@ -135,9 +137,9 @@ async function _load(account: MpAccount, begin: number, loadMore: boolean, promi
     syncTimer.value = window.setTimeout(
       () => {
         if (isCanceled.value) {
-          console.warn('已取消同步');
+          console.warn(t('account.cancelled'));
           isCanceled.value = false;
-          promise.reject(new Error('已取消同步'));
+          promise.reject(new Error(t('account.cancelled')));
           return;
         }
         _load(account, begin, true, promise);
@@ -179,10 +181,13 @@ async function loadSelectedAccountArticle() {
     for (const account of rows) {
       await loadAccountArticle(account);
     }
-    const rangeHint = isSyncAll() ? '' : `（同步范围：${getSyncRangeLabel()}）`;
-    toast.success('同步完成', `已成功同步 ${rows.length} 个公众号${rangeHint}`);
+    const rangeHint = isSyncAll() ? '' : t('account.syncRangeHint', { range: getSyncRangeLabel() });
+    toast.success(
+      t('account.syncComplete'),
+      t('account.syncCompleteDescription', { count: rows.length, range: rangeHint })
+    );
   } catch (e: any) {
-    toast.error('同步失败', e.message);
+    toast.error(t('account.syncFailed'), e.message);
   }
 }
 
@@ -201,7 +206,7 @@ const columnDefs = ref<ColDef[]>([
   },
   {
     colId: 'round_head_img',
-    headerName: '头像',
+    headerName: t('grid.headers.avatar'),
     field: 'round_head_img',
     sortable: false,
     filter: false,
@@ -213,7 +218,7 @@ const columnDefs = ref<ColDef[]>([
   },
   {
     colId: 'nickname',
-    headerName: '名称',
+    headerName: t('grid.headers.name'),
     field: 'nickname',
     cellDataType: 'text',
     filter: 'agTextColumnFilter',
@@ -222,7 +227,7 @@ const columnDefs = ref<ColDef[]>([
   },
   {
     colId: 'create_time',
-    headerName: '添加时间',
+    headerName: t('grid.headers.addTime'),
     field: 'create_time',
     valueFormatter: p => (p.value ? formatTimeStamp(p.value) : ''),
     filter: 'agDateColumnFilter',
@@ -237,7 +242,7 @@ const columnDefs = ref<ColDef[]>([
   },
   {
     colId: 'update_time',
-    headerName: '最后同步时间',
+    headerName: t('grid.headers.lastSyncTime'),
     field: 'update_time',
     valueFormatter: p => (p.value ? formatTimeStamp(p.value) : ''),
     filter: 'agDateColumnFilter',
@@ -250,7 +255,7 @@ const columnDefs = ref<ColDef[]>([
   },
   {
     colId: 'total_count',
-    headerName: '消息总数',
+    headerName: t('grid.headers.totalMessages'),
     field: 'total_count',
     cellDataType: 'number',
     cellRenderer: 'agAnimateShowChangeCellRenderer',
@@ -260,7 +265,7 @@ const columnDefs = ref<ColDef[]>([
   },
   {
     colId: 'count',
-    headerName: '已同步消息数',
+    headerName: t('grid.headers.syncedMessages'),
     field: 'count',
     cellDataType: 'number',
     cellRenderer: 'agAnimateShowChangeCellRenderer',
@@ -270,7 +275,7 @@ const columnDefs = ref<ColDef[]>([
   },
   {
     colId: 'articles',
-    headerName: '已同步文章数',
+    headerName: t('grid.headers.syncedArticles'),
     field: 'articles',
     cellDataType: 'number',
     cellRenderer: 'agAnimateShowChangeCellRenderer',
@@ -281,7 +286,7 @@ const columnDefs = ref<ColDef[]>([
   },
   {
     colId: 'load_percent',
-    headerName: '同步进度',
+    headerName: t('grid.headers.syncProgress'),
     valueGetter: params => (params.data.total_count === 0 ? 0 : params.data.count / params.data.total_count),
     cellDataType: 'number',
     cellRenderer: GridLoadProgress,
@@ -290,18 +295,18 @@ const columnDefs = ref<ColDef[]>([
   },
   {
     colId: 'completed',
-    headerName: '是否同步完成',
+    headerName: t('grid.headers.syncCompleted'),
     field: 'completed',
     cellDataType: 'boolean',
     filter: 'agSetColumnFilter',
-    filterParams: createBooleanColumnFilterParams('已同步完成', '未同步完成'),
+    filterParams: createBooleanColumnFilterParams(t('grid.filters.synced'), t('grid.filters.notSynced')),
     cellClass: 'flex justify-center items-center',
     headerClass: 'justify-center',
     minWidth: 200,
   },
   {
     colId: 'action',
-    headerName: '操作',
+    headerName: t('grid.headers.action'),
     field: 'fakeid',
     sortable: false,
     filter: false,
@@ -313,11 +318,14 @@ const columnDefs = ref<ColDef[]>([
         isCanceled.value = false;
         loadAccountArticle(params.data)
           .then(() => {
-            const rangeHint = isSyncAll() ? '' : `（同步范围：${getSyncRangeLabel()}）`;
-            toast.success('同步完成', `公众号【${params.data.nickname}】的文章已同步完毕${rangeHint}`);
+            const rangeHint = isSyncAll() ? '' : t('account.syncRangeHint', { range: getSyncRangeLabel() });
+            toast.success(
+              t('account.syncComplete'),
+              t('account.singleSyncCompleteDescription', { name: params.data.nickname, range: rangeHint })
+            );
           })
           .catch(e => {
-            toast.error('同步失败', e.message);
+            toast.error(t('account.syncFailed'), e.message);
           });
       },
       onStop: (params: ICellRendererParams) => {
@@ -345,7 +353,7 @@ const gridOptions: GridOptions = defu(
   {
     getRowId: (params: GetRowIdParams) => String(params.data.fakeid),
   },
-  sharedGridOptions
+  getSharedGridOptions(t, locale.value)
 );
 
 const gridApi = shallowRef<GridApi | null>(null);
@@ -410,8 +418,8 @@ function deleteSelectedAccounts() {
   const rows = getSelectedRows();
   const ids = rows.map(info => info.fakeid);
   modal.open(ConfirmModal, {
-    title: '确定要删除所选公众号的数据吗？',
-    description: '删除之后，该公众号的所有数据(包括已下载的文章和留言等)都将被清空。',
+    title: t('account.deleteTitle'),
+    description: t('account.deleteDescription'),
     async onConfirm() {
       try {
         isDeleting.value = true;
@@ -444,21 +452,21 @@ async function handleFileChange(evt: Event) {
       const jsonData = JSON.parse(await file.text());
       if (jsonData.usefor !== 'wechat-article-exporter') {
         // 文件格式不正确
-        toast.error('导入公众号失败', '导入文件格式不正确，请选择该网站导出的文件进行导入。');
+        toast.error(t('account.importFailed'), t('account.invalidImportFile'));
         return;
       }
       const infos = jsonData.accounts;
       if (!infos || infos.length <= 0) {
         // 文件格式不正确
-        toast.error('导入公众号失败', '导入文件格式不正确，请选择该网站导出的文件进行导入。');
+        toast.error(t('account.importFailed'), t('account.invalidImportFile'));
         return;
       }
 
       await importMpAccounts(infos);
       await refresh();
     } catch (error) {
-      console.error('导入公众号时 JSON 解析失败:', error);
-      toast.error('导入公众号', (error as Error).message);
+      console.error('Import account JSON parse failed:', error);
+      toast.error(t('account.importAccount'), (error as Error).message);
     } finally {
       importBtnLoading.value = false;
     }
@@ -476,8 +484,8 @@ function exportAccount() {
       usefor: 'wechat-article-exporter',
       accounts: rows,
     };
-    exportAccountJsonFile(data, '公众号');
-    toast.success('导出公众号', `成功导出了 ${rows.length} 个公众号`);
+    exportAccountJsonFile(data, t('account.title'));
+    toast.success(t('account.exportAccount'), t('account.exportSuccessDescription', { count: rows.length }));
   } finally {
     exportBtnLoading.value = false;
   }
@@ -489,17 +497,17 @@ const { getActualDateRange } = useSyncDeadline();
 <template>
   <div class="h-full">
     <Teleport defer to="#title">
-      <h1 class="text-[28px] leading-[34px] text-slate-12 dark:text-slate-50 font-bold">公众号管理</h1>
+      <h1 class="text-[28px] leading-[34px] text-slate-12 dark:text-slate-50 font-bold">{{ t('account.title') }}</h1>
     </Teleport>
 
     <div class="flex flex-col h-full divide-y divide-gray-200">
       <!-- 顶部操作区 -->
       <header class="flex items-stretch gap-3 px-3 py-3">
         <UButton icon="i-lucide:user-plus" color="blue" :disabled="isDeleting || addBtnLoading" @click="addAccount">
-          {{ addBtnLoading ? '添加中...' : '添加' }}
+          {{ addBtnLoading ? t('common.adding') : t('common.add') }}
         </UButton>
         <UButton icon="i-lucide:arrow-down-to-line" color="blue" :loading="importBtnLoading" @click="importAccount">
-          批量导入
+          {{ t('account.batchImport') }}
           <input ref="fileRef" type="file" accept=".json" class="hidden" @change="handleFileChange" />
         </UButton>
         <UButton
@@ -509,7 +517,7 @@ const { getActualDateRange } = useSyncDeadline();
           :disabled="!hasSelectedRows"
           @click="exportAccount"
         >
-          批量导出
+          {{ t('account.batchExport') }}
         </UButton>
         <UButton
           color="rose"
@@ -518,7 +526,7 @@ const { getActualDateRange } = useSyncDeadline();
           :loading="isDeleting"
           :disabled="!hasSelectedRows"
           @click="deleteSelectedAccounts"
-          >删除</UButton
+          >{{ t('common.delete') }}</UButton
         >
         <UButton
           color="black"
@@ -527,10 +535,12 @@ const { getActualDateRange } = useSyncDeadline();
           :loading="isSyncing"
           :disabled="isDeleting || !hasSelectedRows"
           @click="loadSelectedAccountArticle"
-          >同步</UButton
+          >{{ t('common.sync') }}</UButton
         >
         <div class="hidden xl:flex flex-1 justify-end">
-          <span class="self-end text-sm text-blue-500 font-medium">同步范围: {{ getActualDateRange() }}</span>
+          <span class="self-end text-sm text-blue-500 font-medium">
+            {{ t('account.syncRange', { range: getActualDateRange() }) }}
+          </span>
         </div>
       </header>
 

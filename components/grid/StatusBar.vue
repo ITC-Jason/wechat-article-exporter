@@ -5,6 +5,7 @@ interface Props {
   params: IStatusPanelParams;
 }
 const props = defineProps<Props>();
+const { t } = useLocale();
 
 const selectedRowCount = ref(0);
 const displayedRowCount = ref(0);
@@ -29,6 +30,6 @@ onUnmounted(() => {
 
 <template>
   <div class="flex items-center h-[40px] gap-3 font-mono font-semibold" v-if="displayedRowCount > 0">
-    <span class="text-green-500">已选 {{ selectedRowCount }}/{{ displayedRowCount }}</span>
+    <span class="text-green-500">{{ t('grid.selected', { selected: selectedRowCount, total: displayedRowCount }) }}</span>
   </div>
 </template>

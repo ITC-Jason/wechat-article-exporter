@@ -22,8 +22,8 @@
         <div class="relative">
           <h1 class="glitch text-6xl font-bold text-[#0A0A0A] md:text-8xl" data-text="ERROR">ERROR</h1>
         </div>
-        <h2 class="mt-4 text-3xl font-bold tracking-tight text-gray-800 sm:text-4xl">出了点小状况</h2>
-        <p class="mt-4 text-base text-gray-600">抱歉，页面出现了一些问题。请稍后重试。</p>
+        <h2 class="mt-4 text-3xl font-bold tracking-tight text-gray-800 sm:text-4xl">{{ t('errorPage.title') }}</h2>
+        <p class="mt-4 text-base text-gray-600">{{ t('errorPage.description') }}</p>
         <div v-if="errorCode" class="mt-6 text-sm text-gray-500 opacity-75">
           <p>
             Error Code: <span class="font-mono">{{ errorCode }}</span>
@@ -33,7 +33,7 @@
           class="mt-8 inline-flex items-center justify-center rounded-lg bg-[#0A0A0A] px-5 py-3 text-base font-medium text-white shadow-md transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#0A0A0A] focus:ring-offset-2 focus:ring-offset-background-light"
           href="/"
         >
-          返回主页
+          {{ t('errorPage.backHome') }}
         </a>
       </div>
     </div>
@@ -41,10 +41,10 @@
 </template>
 
 <script lang="ts" setup>
-import { websiteName } from '~/config/index.js';
+const { t } = useLocale();
 
 useHead({
-  title: `出了点小状况 | ${websiteName}`,
+  title: computed(() => `${t('errorPage.title')} | ${t('site.name')}`),
 });
 
 const route = useRoute();

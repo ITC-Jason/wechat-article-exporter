@@ -24,6 +24,7 @@ interface Props {
 defineProps<Props>();
 
 const open = ref(false);
+const { t } = useLocale();
 
 const host = window.location.protocol + '//' + window.location.host;
 </script>
@@ -36,44 +37,44 @@ const host = window.location.protocol + '//' + window.location.host;
     </h2>
 
     <div>
-      <p class="font-semibold mb-2">简要描述</p>
+      <p class="font-semibold mb-2">{{ t('api.brief') }}</p>
       <p class="font-serif">{{ description }}</p>
     </div>
     <div v-if="remark">
-      <p class="font-semibold mb-2">备注:</p>
+      <p class="font-semibold mb-2">{{ t('api.remark') }}</p>
       <p class="text-rose-500">{{ remark }}</p>
     </div>
     <div>
-      <p class="font-semibold mb-2">请求URL:</p>
+      <p class="font-semibold mb-2">{{ t('api.requestUrl') }}</p>
       <p class="font-mono border p-2 rounded-md">
         <span class="text-gray-400">{{ host }}</span>
         <span class="font-semibold">{{ url }}</span>
       </p>
     </div>
     <div>
-      <p class="font-semibold mb-2">请求方式:</p>
+      <p class="font-semibold mb-2">{{ t('api.method') }}</p>
       <p class="font-mono border p-2 rounded-md">{{ method }}</p>
     </div>
     <div>
-      <p class="font-semibold mb-2">参数:</p>
+      <p class="font-semibold mb-2">{{ t('api.params') }}</p>
       <div class="border rounded-md overflow-hidden">
         <table class="font-mono">
           <thead>
             <tr>
-              <th>参数名</th>
-              <th>参数位置</th>
-              <th>强制</th>
-              <th>默认值</th>
-              <th>类型</th>
-              <th>说明</th>
-              <th>备注</th>
+              <th>{{ t('api.paramName') }}</th>
+              <th>{{ t('api.paramLocation') }}</th>
+              <th>{{ t('api.required') }}</th>
+              <th>{{ t('api.defaultValue') }}</th>
+              <th>{{ t('api.type') }}</th>
+              <th>{{ t('api.description') }}</th>
+              <th>{{ t('api.remark') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="p in params" :key="p.name">
               <td>{{ p.name }}</td>
               <td>{{ p.location }}</td>
-              <td>{{ p.required ? '是' : '否' }}</td>
+              <td>{{ p.required ? t('common.yes') : t('common.no') }}</td>
               <td>{{ p.default }}</td>
               <td>{{ p.type }}</td>
               <td>{{ p.label }}</td>
@@ -85,7 +86,7 @@ const host = window.location.protocol + '//' + window.location.host;
     </div>
     <div>
       <p class="font-semibold flex items-center mb-2">
-        <span class="mr-3">返回示例:</span>
+        <span class="mr-3">{{ t('api.responseSample') }}</span>
         <UToggle v-model="open" color="blue" on-icon="i-heroicons:eye" off-icon="i-heroicons:eye-slash" />
       </p>
       <CodeSegment v-if="open" :code="responseSample" lang="json" />
